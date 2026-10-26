@@ -13,12 +13,22 @@ Releases before 0.2.1 are only listed on the
 
 - Playback speed: a slider and −/+ buttons in steps of 0.01, a Preserve pitch switch that, turned off, lets the pitch follow the speed like a record, and the resulting BPM when the song has one (#277).
 - Podcasts: download episodes to play offline, favorite them, queue them, and find them in Library, search and Home. Thanks to Garrit Schröder.
+- Playlists: while songs are selected, a row answers a hold by moving to another place in the list, and the selection bar's Save order button writes the new order back to the server. The drag is offered only where the list is in the order the server keeps it, so a sorted view cannot be written back as a sort you never asked for, and only on a list you may edit — one somebody else owns, or one the server says cannot be edited, shows neither the grip nor the button (#279).
 
 ### Changed
 
 - Search: filtering by Artists or Albums shows the results as a grid instead of a single sideways row (#280).
+- Playlists: the hold that opens a selection no longer marks the song it started on — the selection comes up with nothing marked, and the songs it holds are the taps that follow (#279).
+- Playlists: while songs are selected, the big play button no longer docks in the bar: it keeps scrolling with the header and slips behind the bar instead of stopping on it (#279).
+
+### Removed
+
+- Playlists: the ⋯ → Reorder screen. Holding a row while songs are selected is the way into the same drag, so the second Cancel/Done page is gone with the second implementation of it (#279).
 
 ### Fixed
+
+- A playlist with songs selected no longer freezes the page around the rows: the cover, the header's colour and the fixed bar now follow the scroll exactly as they do outside the selection, and leaving the selection no longer jumps a list you had scrolled deep back to its top (#279).
+- The fixed bar of a selection no longer turns transparent as you scroll down: it keeps the header's colour at every scroll, so the playlist's own title no longer reads over the count line.
 
 - Casting (#285):
   - If the speaker or TV stops responding for 30 seconds, playback returns to the phone, paused. The same happens if another app takes it over.

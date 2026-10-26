@@ -339,6 +339,15 @@ export interface Playlist {
   public?: boolean;
   /** Playlist owner ("System" for Ampache stock smartlists). */
   owner?: string;
+  /**
+   * The server says this list may not be edited by the user it is answering for
+   *  (OpenSubsonic `readonly`, which is how a server's smart playlists and its own
+   *  lists come down where the server reports it: their order is the result of the
+   *  rules the list was built with, so there is no order of yours in it to rewrite
+   *  — and a list somebody else owns is read to you as well). Absent on the servers
+   *  that say nothing, where the app goes by the owner instead (see `isEditable`).
+   */
+  readonly?: boolean;
   /** Creation date (ISO); sent by Navidrome/Subsonic and the local profile. */
   created?: string;
   /** Last modification (ISO). */
