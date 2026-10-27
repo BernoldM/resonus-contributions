@@ -1,0 +1,1 @@
+Statische Originalbilder unverändert kopiert. Videos als stumme Kopien, ohne Neucodierung. Zuordnung und Einschränkungen: ../SCREENSHOTS.md. Öffentliche URLs werden erst nach der Beispielvorschau angelegt.
