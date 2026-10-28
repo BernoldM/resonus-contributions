@@ -20,6 +20,8 @@ Releases before 0.2.1 are only listed on the
 - Search: filtering by Artists or Albums shows the results as a grid instead of a single sideways row (#280).
 - Playlists: the hold that opens a selection no longer marks the song it started on — the selection comes up with nothing marked, and the songs it holds are the taps that follow (#279).
 - Playlists: while songs are selected, the big play button no longer docks in the bar: it keeps scrolling with the header and slips behind the bar instead of stopping on it (#279).
+- Playlists: an order you dragged but did not save exists only on that screen: leaving the selection without pressing "Save order" puts the list back in the order the server keeps, and the next time you open it the list is the server's again (#279).
+- Playlists: "Add to a playlist" gives up its slot on the bar only where the drag's "Save order" is drawn, since the bar would be four buttons wide with both on it; on every other selection bar — an album's, a genre's, an artist's songs — adding keeps its own slot as before (#279).
 
 ### Removed
 
@@ -28,7 +30,7 @@ Releases before 0.2.1 are only listed on the
 ### Fixed
 
 - A playlist with songs selected no longer freezes the page around the rows: the cover, the header's colour and the fixed bar now follow the scroll exactly as they do outside the selection, and leaving the selection no longer jumps a list you had scrolled deep back to its top (#279).
-- The fixed bar of a selection no longer turns transparent as you scroll down: it keeps the header's colour at every scroll, so the playlist's own title no longer reads over the count line.
+- The fixed bar of a selection no longer turns transparent as you scroll down: it keeps the header's colour at every scroll, so a list's own title no longer reads over the count line (#279).
 
 - Casting (#285):
   - If the speaker or TV stops responding for 30 seconds, playback returns to the phone, paused. The same happens if another app takes it over.
