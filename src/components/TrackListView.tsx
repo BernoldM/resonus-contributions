@@ -527,6 +527,16 @@ export function TrackListView({
    *  the bar's Save order reads the same thing the display does.
    */
   const [draggedRows, setDraggedRows] = useState<{ song: Song; index: number }[] | null>(null);
+  /**
+   * Whether the order of a drag whose row is still travelling has to be thrown
+   *  away. The engine answers with that order inside the animation that carries
+   *  the row into its new place - 200 ms after the finger left
+   *  (ReorderableListCore.tsx:694) - so a hand that left the selection in the
+   *  same breath clears the order first and is handed it back afterwards, which
+   *  would make the next selection offer a Save order over an order the hand
+   *  already abandoned.
+   */
+  const dropReorder = useRef(false);
 
   // The order a hand made belongs to the view that offered the drag. The view is
   //  a preference a hand changes by tapping the header's ⇅, and the rows under
@@ -547,6 +557,9 @@ export function TrackListView({
   function exitSelection() {
     setSelectedIds(null);
     setDraggedRows((cur) => (cur === null ? cur : null));
+    // And nothing may put an order back for a drag that is still travelling: the
+    //  engine answers 200 ms after the release (see `dropReorder`).
+    dropReorder.current = true;
     // Leaving is also the release of whatever row was under the hand: the flag
     //  that says a row is under a hand is cleared by that row's own press, and
     //  a drag that was cancelled mid-way leaves no press behind it, which would
@@ -893,6 +906,19 @@ export function TrackListView({
     reorderEngine && selecting && !searching && serverOrder && dragRows.length > 1;
 
   /**
+   * The order the hand made, as long as it is still an order of the rows on
+   *  screen: the footer's suggestion chip adds to the list inside a selection, so
+   *  a song can arrive after the drag made the order, and an order of rows that
+   *  are no longer the list's is not an order of this list — saving it would
+   *  write the songs missing from it out of the playlist. A length that no longer
+   *  matches says it: the hand takes songs out with an action that leaves
+   *  selection mode, and that clears the order, so a list growing under a hand is
+   *  the only thing that can make an order stop fitting.
+   */
+  const dragOrder =
+    draggedRows !== null && draggedRows.length === dragRows.length ? draggedRows : null;
+
+  /**
    * The two ends of a hand on a row, which the engine reports rather than the
    *  app guessing: `startDrag` runs `onDragStart` only inside the branch that
    *  really started a drag (ReorderableListCore.tsx:1026 - an arm asked while
@@ -904,16 +930,20 @@ export function TrackListView({
    *  had moved (see `dragArmed`). The library's callbacks are worklets, so both
    *  ends hand their bookkeeping back to JS.
    *
-   *  It answers with the rows the engine is holding, which is why it sits below
-   *  `dragRows` and `rowKeys`: the place a row lifted from is a place in the
-   *  list on screen, and the key it answers with is that row's own.
+   *  It answers with the rows the engine is holding: the ones on screen, which
+   *  is `dragOrder` where a hand has made an order and `dragRows` otherwise —
+   *  and that is why it sits below those two and `rowKeys`: the place a row
+   *  lifted from is a place in the list on screen, and the key it answers with
+   *  is that row's own.
    */
   function dragStarted(index: number) {
     dragArmed.current = true;
+    // This drag is the hand's: an order it ends with is an order to keep.
+    dropReorder.current = false;
     // The place the row lifted from, in the screen's own list, which is the key
     //  the row answers with: `index` counts the rows on the list, and a row that
     //  travelled still carries its old place.
-    const place = (draggedRows ?? dragRows)[index]?.index;
+    const place = (dragOrder ?? dragRows)[index]?.index;
     if (place != null) justLongPressed.current = rowKeys[place];
   }
 
@@ -1012,7 +1042,7 @@ export function TrackListView({
         icon: 'swap-vertical',
         label: t('Save order'),
         onPress: () => {
-          const rows = draggedRows ?? dragRows;
+          const rows = dragOrder ?? dragRows;
           const ids = rows.map((r) => r.song.id);
           exitSelection();
           selection.reorder!.onSave(ids);
@@ -1023,11 +1053,12 @@ export function TrackListView({
   /** The bar's copy of the drag's button: only where a row may answer a hold
    *  and the screen can write the order back. The room the bar gives to it is
    *  decided with it, which is why the two props below read this one value.
-   *  It stays visible and dimmed until a row actually went somewhere, which is
-   *  what `draggedRows` answers for.
+   *  It stays visible and dimmed until a row actually went somewhere, and only
+   *  while that order still describes the rows on screen, which is what
+   *  `dragOrder` answers for.
    */
   const dragButton =
-    dragging && saveOrder ? { action: saveOrder, ready: draggedRows !== null } : undefined;
+    dragging && saveOrder ? { action: saveOrder, ready: dragOrder !== null } : undefined;
 
   // The play button over the bar. It follows the place laid out for it in the
   // header - the search row's height riding in the outer wrapper, the scroll
@@ -1487,7 +1518,7 @@ export function TrackListView({
           // The dragged order is the display only where the drag is offered: a
           //  search shows the rows that match, and an order the hand made is an
           //  order over the whole list, not over the rows that match.
-          data={dragging ? draggedRows ?? dragRows : dragRows}
+          data={dragging ? dragOrder ?? dragRows : dragRows}
           keyExtractor={(row) => rowKeys[row.index]}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
@@ -1517,6 +1548,13 @@ export function TrackListView({
             //  came down (ReorderableListCore.tsx:514), so an event here is a
             //  row that moved: what the screen shows becomes the order the hand
             //  made, which is what the bar's Save order then writes back.
+            if (dropReorder.current) {
+              // Unless the hand already left: the order is still arriving from a
+              //  drag that is no longer the screen's to keep (see `exitSelection`,
+              //  which is what says so).
+              dropReorder.current = false;
+              return;
+            }
             setDraggedRows((cur) => applyDrag(cur ?? dragRows, from, to));
           }}
           // The engine saying a drag started: what the app needs to know is that
