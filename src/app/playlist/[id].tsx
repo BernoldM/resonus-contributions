@@ -241,26 +241,29 @@ export default function PlaylistScreen() {
   }
 
   /**
-   * Whether the list has an order to rewrite at all: more than one song, the
-   *  write is possible (offline counts as ours), and the list is one a hand may
-   *  write to. A playlist somebody else owns, or one the server says cannot be
-   *  edited - which is how a server's smart playlists come down, their order
-   *  being the result of the rules they were built with - has no order of yours
-   *  in it: a row that travelled there would not move one song but rewrite a
-   *  list the hand does not own, or ask the server to forget the rules it built
-   *  the list from.
+   * Whether the list is one whose order a hand may rewrite: the write is possible
+   *  (offline counts as ours), and the list is one a hand may write to. A playlist
+   *  somebody else owns, or one the server says cannot be edited - which is how a
+   *  server's smart playlists come down, their order being the result of the rules
+   *  they were built with - has no order of yours in it: a row that travelled there
+   *  would not move one song but rewrite a list the hand does not own, or ask the
+   *  server to forget the rules it built the list from.
    *
-   *  This decides the engine the screen runs, and the engine is not something
-   *  the view may change: the view is a preference a hand changes by tapping the
-   *  header's ⇅, and an engine that followed it would swap the list under a page
-   *  that is halfway down.
+   *  This decides the engine the screen runs, and the engine is a lifetime
+   *  decision: it follows the list, not what is on screen. The view is a preference
+   *  a hand changes by tapping the header's ⇅, and the songs change under a hand as
+   *  well - removing one of two, or adding one back, happens with the screen open
+   *  and halfway down - so neither of them may flip it. An engine that followed
+   *  either would swap the list under a page that is halfway down, and everything
+   *  the page paints around the rows would keep painting the scroll the list no
+   *  longer up had made. How many rows there are belongs to the other question,
+   *  where a row may answer a hold, over the rows on screen (see `dragging`).
    */
-  const hasOrder =
-    (data?.songs.length ?? 0) > 1 && (offline || !!auth) && isEditable(data?.playlist, auth?.username);
+  const hasOrder = (offline || !!auth) && isEditable(data?.playlist, auth?.username);
 
   /**
    * Whether the view on screen is the order the server keeps. Dragging in an
-   *  A–Z or Recently-added view would not move one song inside the order the
+   *  A-Z or Recently-added view would not move one song inside the order the
    *  server keeps - it would rewrite that order to whatever the view happens to
    *  show, which is a sort the hand never asked for and cannot undo - so over
    *  another view neither the grip nor the bar's Save order is offered. The
@@ -401,7 +404,7 @@ export default function PlaylistScreen() {
           // A playlist's order is the app's to rewrite, so its rows live under
           //  the engine whose rows answer a hold by travelling: the drag surface
           //  the ⋯ menu used to open is there under the finger instead, over the
-          //  view that is the server's order, and the bar's fourth button keeps
+          //  view that is the server's order, and the bar's Save order button keeps
           //  whatever order the hand ended with (#279).
           reorder:
             hasOrder

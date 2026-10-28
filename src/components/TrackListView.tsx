@@ -862,16 +862,6 @@ export function TrackListView({
    */
   const reorderEngine = !!selection?.reorder;
   /**
-   * Where a hold on a row moves it: only while selecting, only where the view
-   *  on screen is the order the server keeps (the screen says so, see
-   *  `serverOrder`), and only while not searching. Outside a selection a
-   *  vertical drag is the list's scroll, and the row's own sideways swipe is a
-   *  pan that would fight the list's; while searching, the rows shown are not
-   *  the whole list, and moving part of a list through another part is not a
-   *  thing that has a meaning.
-   */
-  const dragging = reorderEngine && selecting && !searching && serverOrder;
-  /**
    * The rows the reorderable engine holds: the display order, each carrying its
    *  place in the screen's list, or the live search results. The engine does not
    *  swap when a selection comes in, so the search has to be visible in the data
@@ -885,6 +875,22 @@ export function TrackListView({
         : songs.map((song, index) => ({ song, index })),
     [filtered, songs],
   );
+
+  /**
+   * Where a hold on a row moves it: only while selecting, only where the view
+   *  on screen is the order the server keeps (the screen says so, see
+   *  `serverOrder`), only while not searching, and only where there is
+   *  somewhere to travel - a drag needs two places, which a list of a single
+   *  row does not have, and answering it here is what keeps the grip and the
+   *  bar's button off a row the engine could only ever refuse.
+   *
+   *  Outside a selection a vertical drag is the list's scroll, and the row's
+   *  own sideways swipe is a pan that would fight the list's; while searching,
+   *  the rows shown are not the whole list, and moving part of a list through
+   *  another part is not a thing that has a meaning.
+   */
+  const dragging =
+    reorderEngine && selecting && !searching && serverOrder && dragRows.length > 1;
 
   /**
    * The two ends of a hand on a row, which the engine reports rather than the
@@ -1390,11 +1396,12 @@ export function TrackListView({
           mode to keep the screen flat black. It stays where the rows can be
           dragged: the colour is what says which playlist this is, and an
           accent that went out the moment the selection came in would leave a
+          accent that went out the moment the selection came in would leave a
           black page under a hand that is about to arrange that playlist. The
-          drag surface owns its scroll and never answers for `scrollY`, so
-          while it is up the tint holds still rather than sliding on an
-          offset it cannot read (see `exitSelection`, which puts the two back
-          in step when the plain list takes over). */}
+          tint follows `scrollY` whichever list made it, the reorderable one
+          included - its handler answers for the number the same way the
+          ordinary list's listener does (see `dragScroll`, and the reads the
+          two share in `scrolledTo`). */}
       {searching ? null : (
         <Animated.View
           pointerEvents="none"
