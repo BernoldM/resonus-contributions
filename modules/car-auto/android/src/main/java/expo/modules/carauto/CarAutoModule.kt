@@ -30,17 +30,15 @@ class CarAutoModule : Module() {
     }
 
     Function("setNowPlaying") { json: String? ->
-      val player = ResonusCarBrowserService.activePlayer ?: return@Function
       if (json.isNullOrEmpty() || json == "null") {
-        player.applyNowPlaying(null)
+        CarPlaybackMirror.setNowPlaying(null)
         return@Function
       }
       val np = runCatching { parseNowPlaying(json) }.getOrNull() ?: return@Function
-      player.applyNowPlaying(np)
+      CarPlaybackMirror.setNowPlaying(np)
     }
 
     Function("setQueue") { json: String ->
-      val player = ResonusCarBrowserService.activePlayer ?: return@Function
       val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function
       val arr = o.optJSONArray("tracks") ?: return@Function
       val items = ArrayList<JsProxyPlayer.NowPlaying>(arr.length())
@@ -57,16 +55,14 @@ class CarAutoModule : Module() {
           ),
         )
       }
-      player.applyQueue(items, o.optInt("currentIndex", 0))
+      CarPlaybackMirror.setQueue(items, o.optInt("currentIndex", 0))
     }
 
     Function("setQueueIndex") { index: Int ->
-      val player = ResonusCarBrowserService.activePlayer ?: return@Function
-      player.applyQueueIndex(index)
+      CarPlaybackMirror.setQueueIndex(index)
     }
 
     Function("setPlaybackState") { json: String ->
-      val player = ResonusCarBrowserService.activePlayer ?: return@Function
       val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function
       val isPlaying = o.optBoolean("isPlaying", false)
       val posMs = o.optLong("positionMs", 0L)
@@ -76,8 +72,8 @@ class CarAutoModule : Module() {
         "all" -> Player.REPEAT_MODE_ALL
         else -> Player.REPEAT_MODE_OFF
       }
-      player.applyPlaybackState(isPlaying, posMs, shuf, repeat)
-      player.applyFavorite(
+      CarPlaybackMirror.setPlaybackState(
+        isPlaying, posMs, shuf, repeat,
         if (o.isNull("favorite")) null else o.optBoolean("favorite"),
         o.optString("favoriteLabel").takeIf { it.isNotEmpty() },
       )

@@ -67,4 +67,19 @@ class JsProxyPlayerTest {
       player.release()
     }
   }
+
+  @Test
+  fun duplicateEnteringTheVisibleQueueAfterASkipDoesNotCrash() {
+    val tracks = (0..109).map { track(if (it == 98 || it == 101) "ordinary" else "song-$it") }
+    val player = JsProxyPlayer()
+    try {
+      player.applyQueue(tracks, 0)
+      assertEquals(101, player.mediaItemCount)
+      player.applyQueueIndex(1)
+      assertEquals(102, player.mediaItemCount)
+      assertEquals(102, uids(player).toSet().size)
+    } finally {
+      player.release()
+    }
+  }
 }

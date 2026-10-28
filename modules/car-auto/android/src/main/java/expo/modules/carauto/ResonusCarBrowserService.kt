@@ -39,6 +39,7 @@ class ResonusCarBrowserService : MediaLibraryService() {
     val player = JsProxyPlayer().also {
       jsPlayer = it
       activePlayer = it
+      CarPlaybackMirror.attach(it)
     }
     session = MediaLibrarySession.Builder(this, player, LibraryCallback())
       .setId("ResonusCarBrowserSession")
@@ -114,7 +115,13 @@ class ResonusCarBrowserService : MediaLibraryService() {
 
   override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = session
 
+  // This is a bound mirror, not the audio engine. expo-audio's playback
+  // service already owns the foreground notification. Restoring a playing
+  // mirror must not start a second foreground service from the background.
+  override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) = Unit
+
   override fun onDestroy() {
+    jsPlayer?.let(CarPlaybackMirror::detach)
     if (activePlayer === jsPlayer) activePlayer = null
     session?.run { player.release(); release() }
     session = null

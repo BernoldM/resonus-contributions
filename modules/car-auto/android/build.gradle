@@ -17,6 +17,9 @@ android {
   buildFeatures {
     buildConfig true
   }
+  testOptions {
+    unitTests.includeAndroidResources = true
+  }
 }
 
 dependencies {
