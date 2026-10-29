@@ -16,9 +16,11 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
+import androidx.media3.session.SessionError
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
 
 /**
  * The MediaLibraryService that shows Android Auto the BrowseTree built in JS.
@@ -34,11 +36,15 @@ class ResonusCarBrowserService : MediaLibraryService() {
   private var session: MediaLibrarySession? = null
   private var jsPlayer: JsProxyPlayer? = null
   private val mainHandler = Handler(Looper.getMainLooper())
+  private lateinit var albumLoader: AlbumBrowseLoader
 
   override fun onCreate() {
     super.onCreate()
     CarArtwork.init(applicationContext)
     BrowseTreeCache.loadFromDiskIfNeeded(applicationContext)
+    albumLoader = AlbumBrowseLoader(applicationContext, mainHandler, { id, parent, profile ->
+      CarAutoModule.instance?.emitBrowse(id, parent, profile) == true
+    }, ::notifyTreeChanged)
     val player = JsProxyPlayer().also {
       jsPlayer = it
       activePlayer = it
@@ -125,6 +131,7 @@ class ResonusCarBrowserService : MediaLibraryService() {
   override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) = Unit
 
   override fun onDestroy() {
+    albumLoader.close()
     jsPlayer?.let(CarPlaybackMirror::detach)
     if (activeService === this) activeService = null
     if (activePlayer === jsPlayer) activePlayer = null
@@ -135,8 +142,9 @@ class ResonusCarBrowserService : MediaLibraryService() {
   }
 
   private fun notifyTreeChanged(changed: Map<String, Int>) {
-    if (changed.isEmpty()) return
     mainHandler.post {
+      albumLoader.onTreeChanged()
+      if (changed.isEmpty()) return@post
       val currentSession = session ?: return@post
       for ((parentId, itemCount) in changed) {
         currentSession.notifyChildrenChanged(parentId, itemCount, null)
@@ -239,6 +247,14 @@ class ResonusCarBrowserService : MediaLibraryService() {
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
       val children = BrowseTreeCache.getChildren(parentId)
       CarAutoLog.d("children of=$parentId have=${children.size} page=$page pageSize=$pageSize")
+      if (children.isEmpty() && parentId.startsWith("album:") && findNode(parentId) != null) {
+        // Wait for exactly this album. Returning an empty success here made
+        // every album beyond the prefetch cap appear permanently empty.
+        return Futures.transform(albumLoader.load(parentId), { loaded ->
+          if (loaded == true) pageOf(BrowseTreeCache.getChildren(parentId), page, pageSize, params)
+          else LibraryResult.ofError(SessionError.ERROR_IO)
+        }, MoreExecutors.directExecutor())
+      }
       // Paged, like the search results and for the same reason (see `pageOf`).
       return Futures.immediateFuture(pageOf(children, page, pageSize, params))
     }
@@ -446,6 +462,14 @@ class ResonusCarBrowserService : MediaLibraryService() {
 
     fun notifyTreeChanged(changed: Map<String, Int>) {
       activeService?.notifyTreeChanged(changed)
+    }
+
+    fun browseReady() {
+      activeService?.let { service -> service.mainHandler.post { service.albumLoader.onReady() } }
+    }
+
+    fun completeBrowse(requestId: String, json: String?) {
+      activeService?.let { service -> service.mainHandler.post { service.albumLoader.complete(requestId, json) } }
     }
 
     /** The heart on the car's playback screen. */
