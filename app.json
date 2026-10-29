@@ -90,6 +90,9 @@
             "usesCleartextTraffic": true,
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true
+          },
+          "ios": {
+            "enableUserScriptSandBoxing": false
           }
         }
       ],
