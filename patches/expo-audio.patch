@@ -3362,7 +3362,13 @@ index 074294321e872bb53c0b2d41044dac3c612f14f0..0b6786139c65a55568e4f886c7f82130
      let wasPlaying = ref.timeControlStatus == .playing
      let wasSamplingEnabled = samplingEnabled
      removeQueuedLoopItems()
-@@ -319,6 +384,7 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+@@ -310,4 +375,5 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+   private func replacePlayer(with source: AudioSource, restoreSampling: Bool) {
++    MediaController.shared.removeSession(for: ref)
+     teardownPlayer()
+
+     ref = AudioUtils.createAVPlayer(from: source)
+@@ -319,6 +385,7 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
    }
  
    private func teardownPlayer() {
@@ -3370,7 +3376,7 @@ index 074294321e872bb53c0b2d41044dac3c612f14f0..0b6786139c65a55568e4f886c7f82130
      removeQueuedLoopItems()
      if samplingEnabled {
        uninstallTap()
-@@ -346,7 +412,7 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+@@ -346,7 +413,7 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
  
    private func restorePlaybackState(time: Double, shouldResume: Bool, rate: Float) {
      let cmTime = CMTime(seconds: time, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
@@ -3379,7 +3385,7 @@ index 074294321e872bb53c0b2d41044dac3c612f14f0..0b6786139c65a55568e4f886c7f82130
        guard let self, shouldResume else { return }
        self.play(at: rate)
      }
-@@ -405,6 +471,11 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+@@ -405,6 +472,11 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
    }
  
    private func replacePlayerItem(with item: AVPlayerItem?) {
@@ -3391,7 +3397,7 @@ index 074294321e872bb53c0b2d41044dac3c612f14f0..0b6786139c65a55568e4f886c7f82130
      if let queuePlayer = ref as? AVQueuePlayer {
        queuePlayer.removeAllItems()
        if let item {
-@@ -429,12 +500,67 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+@@ -429,12 +501,67 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
      queuePlayer.insert(nextItem, after: currentItem)
    }
  
@@ -3460,7 +3466,7 @@ index 074294321e872bb53c0b2d41044dac3c612f14f0..0b6786139c65a55568e4f886c7f82130
        queuePlayer.remove(item)
      }
    }
-@@ -459,7 +585,21 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+@@ -459,7 +586,21 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
          return
        }
  
@@ -3482,6 +3488,17 @@ index 074294321e872bb53c0b2d41044dac3c612f14f0..0b6786139c65a55568e4f886c7f82130
          let currentTime = finishedItem.duration.seconds
          self.updateStatus(with: [
            "playing": false,
+@@ -506,9 +647,10 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+   public override func sharedObjectWillRelease() {
+     ref.currentItem?.cancelPendingSeeks()
+     owningRegistry?.remove(self)
+
+     if isActiveForLockScreen {
+       MediaController.shared.setActivePlayer(nil)
+     }
+
++    MediaController.shared.removeSession(for: ref)
+     teardownPlayer()
 diff --git a/ios/AudioRecords.swift b/ios/AudioRecords.swift
 index 33db27c3b8fb40fa9db6659a0787c6b2b503d1ab..a5c41356f93d3d4a45bf14020af1cb1943731751 100644
 --- a/ios/AudioRecords.swift
@@ -3556,7 +3573,7 @@ diff --git a/ios/MediaController.swift b/ios/MediaController.swift
 index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428771bdc95 100644
 --- a/ios/MediaController.swift
 +++ b/ios/MediaController.swift
-@@ -8,12 +8,61 @@ class MediaController {
+@@ -8,12 +8,77 @@ class MediaController {
    private var activePlayer: AudioPlayer?
 -  private var remoteCommandCenter = MPRemoteCommandCenter.shared()
 -  private var nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
@@ -3584,13 +3601,29 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
 +    return session
 +  }
 +
-+  private func activateSession(for player: AudioPlayer) {
++  private func activateSession(for player: AudioPlayer, completion: @escaping () -> Void) {
 +    let session = session(for: player)
 +    activeSession = session
-+    if !session.becomeActiveIfPossible() {
++    session.becomeActiveIfPossible { [weak self] isActive in
++      self?.performOnMain {
 +#if DEBUG
-+      print("Now Playing session activation failed for player \(player.id)")
++        if !isActive {
++          print("Now Playing session activation failed for player \(player.id)")
++        }
 +#endif
++        completion()
++      }
++    }
++  }
++
++  func removeSession(for player: AVPlayer) {
++    performOnMain {
++      let key = ObjectIdentifier(player)
++      guard let session = self.sessions.removeValue(forKey: key) else { return }
++      self.disableRemoteCommands(for: key, remoteCommandCenter: session.remoteCommandCenter)
++      if self.activeSession === session {
++        self.activeSession = nil
++      }
 +    }
 +  }
 +
@@ -3599,7 +3632,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
 +    command: MPRemoteCommand,
 +    handler: @escaping (MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus
 +  ) {
-+    remoteCommandTargets[playerKey]?.append(command.addTarget(handler))
++    remoteCommandTargets[playerKey]?.append(command.addTarget(handler: handler))
 +  }
  
    private var currentArtworkUrl: URL?
@@ -3620,22 +3653,29 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
  
    func setActivePlayer(_ player: AudioPlayer?, options: LockScreenOptions? = nil) {
      performOnMain {
-@@ -41,3 +90,4 @@ class MediaController {
+@@ -41,3 +106,6 @@ class MediaController {
      if let player {
-+      activateSession(for: player)
-       enableRemoteCommands(options: options)
-       updateNowPlayingInfoOnMain(for: player)
-@@ -50,5 +100,9 @@ class MediaController {
++      activateSession(for: player) { [weak self] in
++        guard let self, self.activePlayer?.id == player.id, self.activeSession === self.session(for: player) else { return }
++        self.enableRemoteCommands(options: options)
++        self.updateNowPlayingInfoOnMain(for: player)
++      }
+-      enableRemoteCommands(options: options)
+-      updateNowPlayingInfoOnMain(for: player)
+@@ -50,5 +119,12 @@ class MediaController {
    private func updateNowPlayingInfoOnMain(for player: AudioPlayer) {
      guard player.id == activePlayer?.id else {
        return
      }
 +    if activeSession !== session(for: player) {
-+      activateSession(for: player)
++      activateSession(for: player) { [weak self] in
++        self?.updateNowPlayingInfoOnMain(for: player)
++      }
++      return
 +    }
 +    guard let nowPlayingInfoCenter else { return }
 
-@@ -68,10 +122,16 @@ class MediaController {
+@@ -68,10 +143,16 @@ class MediaController {
      } else {
        resetArtworkState()
        nowPlayingInfo.removeValue(forKey: MPMediaItemPropertyArtwork)
@@ -3652,7 +3692,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
    }
  
    private func applyPlaybackInfo(_ info: inout [String: Any], for player: AudioPlayer) {
-@@ -80,7 +140,11 @@ class MediaController {
+@@ -80,7 +161,11 @@ class MediaController {
        info.removeValue(forKey: MPMediaItemPropertyPlaybackDuration)
        info.removeValue(forKey: MPNowPlayingInfoPropertyElapsedPlaybackTime)
      } else {
@@ -3665,7 +3705,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime
      }
      info[MPNowPlayingInfoPropertyPlaybackRate] = player.isPlaying ? player.ref.rate : 0.0
-@@ -139,17 +203,21 @@ class MediaController {
+@@ -139,17 +224,21 @@ class MediaController {
      guard let artworkUrl = metadata.artworkUrl else {
        resetArtworkState()
        info.removeValue(forKey: MPMediaItemPropertyArtwork)
@@ -3687,7 +3727,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
        return
      }
  
-@@ -173,20 +241,79 @@ class MediaController {
+@@ -173,20 +262,79 @@ class MediaController {
          return
        }
  
@@ -3773,7 +3813,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
      activePlayer = nil
      isLiveStream = false
      resetArtworkState()
-@@ -204,34 +331,179 @@ class MediaController {
+@@ -204,34 +352,179 @@ class MediaController {
    private func resetArtworkState() {
      currentArtworkUrl = nil
      cachedArtwork = nil
@@ -3966,19 +4006,19 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.playCommand) { [weak self] _ in
        guard let player = self?.activePlayer else {
          return .commandFailed
-@@ -243,2 +515,2 @@ class MediaController {
+@@ -243,2 +536,2 @@ class MediaController {
 -    remoteCommandCenter.pauseCommand.addTarget { [weak self] _ in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.pauseCommand) { [weak self] _ in
        guard let player = self?.activePlayer else {
-@@ -252,2 +524,2 @@ class MediaController {
+@@ -252,2 +545,2 @@ class MediaController {
 -    remoteCommandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.togglePlayPauseCommand) { [weak self] _ in
        guard let player = self?.activePlayer else {
-@@ -265,2 +537,2 @@ class MediaController {
+@@ -265,2 +558,2 @@ class MediaController {
 -    remoteCommandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.changePlaybackPositionCommand) { [weak self] event in
        guard let player = self?.activePlayer,
-@@ -270,7 +542,7 @@ class MediaController {
+@@ -270,7 +563,7 @@ class MediaController {
        }
  
        let seekTime = CMTime(seconds: event.positionTime, preferredTimescale: 1)
@@ -3987,15 +4027,15 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
  
        return .success
      }
-@@ -278,2 +552,2 @@ class MediaController {
+@@ -278,2 +573,2 @@ class MediaController {
 -    remoteCommandCenter.skipForwardCommand.addTarget { [weak self] event in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.skipForwardCommand) { [weak self] event in
        guard let player = self?.activePlayer,
-@@ -292,2 +566,2 @@ class MediaController {
+@@ -292,2 +587,2 @@ class MediaController {
 -    remoteCommandCenter.skipBackwardCommand.addTarget { [weak self] event in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.skipBackwardCommand) { [weak self] event in
        guard let player = self?.activePlayer,
-@@ -303,13 +575,38 @@ class MediaController {
+@@ -303,13 +596,44 @@ class MediaController {
        return .success
      }
  
@@ -4032,9 +4072,15 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
  
    private func disableRemoteCommands() {
 +    guard let remoteCommandCenter, let activePlayer else { return }
-+    let playerKey = ObjectIdentifier(activePlayer.ref)
++    disableRemoteCommands(for: ObjectIdentifier(activePlayer.ref), remoteCommandCenter: remoteCommandCenter)
++  }
++
++  private func disableRemoteCommands(
++    for playerKey: ObjectIdentifier,
++    remoteCommandCenter: MPRemoteCommandCenter
++  ) {
      remoteCommandCenter.playCommand.isEnabled = false
-@@ -318,13 +615,23 @@ class MediaController {
+@@ -318,13 +642,23 @@ class MediaController {
      remoteCommandCenter.changePlaybackPositionCommand.isEnabled = false
      remoteCommandCenter.skipForwardCommand.isEnabled = false
      remoteCommandCenter.skipBackwardCommand.isEnabled = false
