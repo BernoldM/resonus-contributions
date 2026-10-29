@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { parseArtistSignature } from '@/lib/artistSignatures';
+import { isUsableSignatureThumbhash, parseArtistSignature } from '@/lib/artistSignatures';
 
 const imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/a/ab/signature.svg';
 const source = { url: 'https://commons.wikimedia.org/wiki/File:Signature.svg' };
@@ -43,5 +44,40 @@ describe('artist signature provider boundary', () => {
   });
   it('bounds extreme artwork proportions', () => {
     assert.equal(parseArtistSignature(response({ asset: { url: imageUrl, width: 1e30, height: 1 } }))?.aspect, 12);
+  });
+});
+
+describe('signature image eligibility', () => {
+  it('rejects every JPEG from the actual Leona Lewis provider response', () => {
+    const response = JSON.parse(readFileSync(new URL('./fixtures/signatures/leona-provider.json', import.meta.url), 'utf8'));
+    assert.equal(parseArtistSignature(response), null);
+  });
+  it('rejects a JPEG even if metadata calls it a verified SVG', () => {
+    assert.equal(parseArtistSignature(response({ asset: { url: 'https://upload.wikimedia.org/a.JPG?download=1', format: 'svg' }, verification: 'artist_verified' })), null);
+  });
+  it('skips opaque formats and still considers the next transparent-capable candidate', () => {
+    assert.equal(parseArtistSignature({ signatures: [
+      { asset: { url: 'https://upload.wikimedia.org/scan.jpg', format: 'jpeg' }, license: { status: 'known' } },
+      { asset: imageUrl, source, license },
+    ] })?.imageUrl, imageUrl);
+  });
+});
+
+
+describe('decoded signature mask', () => {
+  function hash(alpha: boolean, average: number, variation: number) {
+    const bytes = new Uint8Array(25);
+    bytes[2] = alpha ? 0x80 : 0;
+    bytes[5] = average | (variation << 4);
+    return Buffer.from(bytes).toString('base64');
+  }
+  it('rejects opaque PNG/SVG pixels and fully transparent or uniform images', () => {
+    for (const value of [hash(false, 15, 0), hash(true, 0, 0), hash(true, 5, 0), hash(true, 15, 1), '', 'not base64', 'AAAAAAA=']) {
+      assert.equal(isUsableSignatureThumbhash(value), false);
+    }
+  });
+  it('accepts a transparent mask with visible strokes, including thin strokes', () => {
+    assert.equal(isUsableSignatureThumbhash(hash(true, 3, 5)), true);
+    assert.equal(isUsableSignatureThumbhash(hash(true, 0, 1)), true);
   });
 });

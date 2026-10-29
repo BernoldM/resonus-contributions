@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Image } from 'expo-image';
+import { Image, type ImageRef } from 'expo-image';
 import { useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 
@@ -15,16 +15,16 @@ export function ArtistSignature({ name, width }: { name: string; width: number }
   const enabled = useSettings((s) => s.artistSignaturesEnabled);
   const api = useSettings((s) => s.artistSignaturesApi);
   const { data } = useQuery({
-    queryKey: ['artist-signature', api, name],
+    queryKey: ['artist-signature-v4', api, name],
     queryFn: () => getArtistSignature(name, api),
     enabled: enabled && !!publicHttpsUrl(api),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
-  const [displayed, setDisplayed] = useState<string>();
-  const [failed, setFailed] = useState<string>();
+  const [displayed, setDisplayed] = useState<ImageRef>();
+  const [failed, setFailed] = useState<ImageRef>();
   const signature = enabled && publicHttpsUrl(api) ? data : null;
-  const shown = !!signature && displayed === signature.imageUrl && failed !== signature.imageUrl;
+  const shown = !!signature && displayed === signature.image && failed !== signature.image;
   const imageWidth = Math.min(280, width - spacing.lg * 2);
   return (
     <Pressable
@@ -38,16 +38,16 @@ export function ArtistSignature({ name, width }: { name: string; width: number }
       {shown ? <View style={{ height: 88 }} /> : (
         <Text numberOfLines={2} style={{ color: colors.text, fontSize: fontSize.xxl, fontWeight: '600', textAlign: 'center' }}>{name}</Text>
       )}
-      {signature && failed !== signature.imageUrl ? (
+      {signature && failed !== signature.image ? (
         <Image
-          source={{ uri: signature.imageUrl }}
+          source={signature.image}
           style={{ position: 'absolute', left: (width - imageWidth) / 2, bottom: spacing.md, width: imageWidth, height: 88, opacity: shown ? 1 : 0 }}
           contentFit="contain"
           contentPosition="bottom"
           tintColor={colors.text}
-          cachePolicy="memory-disk"
-          onDisplay={() => setDisplayed(signature.imageUrl)}
-          onError={() => setFailed(signature.imageUrl)}
+          recyclingKey={`${api}\n${name}\n${signature.imageUrl}`}
+          onDisplay={() => setDisplayed(signature.image)}
+          onError={() => setFailed(signature.image)}
           accessible={false}
         />
       ) : null}
