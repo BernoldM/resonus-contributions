@@ -3687,7 +3687,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
        return
      }
  
-@@ -173,20 +241,78 @@ class MediaController {
+@@ -173,20 +241,79 @@ class MediaController {
          return
        }
  
@@ -3769,10 +3769,11 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
 +        nowPlayingInfoCenter.playbackState = .stopped
 +      }
 +    }
++    activeSession = nil
      activePlayer = nil
      isLiveStream = false
      resetArtworkState()
-@@ -204,34 +330,179 @@ class MediaController {
+@@ -204,34 +331,179 @@ class MediaController {
    private func resetArtworkState() {
      currentArtworkUrl = nil
      cachedArtwork = nil
@@ -3965,19 +3966,19 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.playCommand) { [weak self] _ in
        guard let player = self?.activePlayer else {
          return .commandFailed
-@@ -243,2 +514,2 @@ class MediaController {
+@@ -243,2 +515,2 @@ class MediaController {
 -    remoteCommandCenter.pauseCommand.addTarget { [weak self] _ in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.pauseCommand) { [weak self] _ in
        guard let player = self?.activePlayer else {
-@@ -252,2 +523,2 @@ class MediaController {
+@@ -252,2 +524,2 @@ class MediaController {
 -    remoteCommandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.togglePlayPauseCommand) { [weak self] _ in
        guard let player = self?.activePlayer else {
-@@ -265,2 +536,2 @@ class MediaController {
+@@ -265,2 +537,2 @@ class MediaController {
 -    remoteCommandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.changePlaybackPositionCommand) { [weak self] event in
        guard let player = self?.activePlayer,
-@@ -270,7 +541,7 @@ class MediaController {
+@@ -270,7 +542,7 @@ class MediaController {
        }
  
        let seekTime = CMTime(seconds: event.positionTime, preferredTimescale: 1)
@@ -3986,15 +3987,15 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
  
        return .success
      }
-@@ -278,2 +551,2 @@ class MediaController {
+@@ -278,2 +552,2 @@ class MediaController {
 -    remoteCommandCenter.skipForwardCommand.addTarget { [weak self] event in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.skipForwardCommand) { [weak self] event in
        guard let player = self?.activePlayer,
-@@ -292,2 +565,2 @@ class MediaController {
+@@ -292,2 +566,2 @@ class MediaController {
 -    remoteCommandCenter.skipBackwardCommand.addTarget { [weak self] event in
 +    registerCommandTarget(for: playerKey, command: remoteCommandCenter.skipBackwardCommand) { [weak self] event in
        guard let player = self?.activePlayer,
-@@ -303,13 +574,38 @@ class MediaController {
+@@ -303,13 +575,38 @@ class MediaController {
        return .success
      }
  
@@ -4033,7 +4034,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..9100d311443441581fcb4c3b5e33b428
 +    guard let remoteCommandCenter, let activePlayer else { return }
 +    let playerKey = ObjectIdentifier(activePlayer.ref)
      remoteCommandCenter.playCommand.isEnabled = false
-@@ -318,13 +614,23 @@ class MediaController {
+@@ -318,13 +615,23 @@ class MediaController {
      remoteCommandCenter.changePlaybackPositionCommand.isEnabled = false
      remoteCommandCenter.skipForwardCommand.isEnabled = false
      remoteCommandCenter.skipBackwardCommand.isEnabled = false
