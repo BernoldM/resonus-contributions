@@ -64,6 +64,7 @@ yarn.lock
 # Local notes for coding assistants
 CLAUDE.md
 AGENTS.md
+specs/
 
 # Claude Code settings (local only)
 .claude/
