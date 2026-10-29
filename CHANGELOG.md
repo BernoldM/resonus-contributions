@@ -13,6 +13,7 @@ Releases before 0.2.1 are only listed on the
 
 - Playback speed: a slider and −/+ buttons in steps of 0.01, a Preserve pitch switch that, turned off, lets the pitch follow the speed like a record, and the resulting BPM when the song has one (#277).
 - Podcasts: download episodes to play offline, favorite them, queue them, and find them in Library, search and Home. Thanks to Garrit Schröder.
+- The heart in the player and in the Mini Player: holding it opens the sheet that adds the song to a playlist, so the tap stays what it always was — it only marks the song favorite or takes the mark off. Stations and podcast episodes don't offer the hold, as neither is a track a playlist can name (#286). Thanks to @Lennardsmw.
 
 ### Changed
 

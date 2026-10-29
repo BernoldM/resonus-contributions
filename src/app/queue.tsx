@@ -25,7 +25,7 @@ import ReorderableList, {
 } from 'react-native-reorderable-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COVER, songCoverUrl } from '@/api/data';
+import { COVER, canGoIntoPlaylist, songCoverUrl } from '@/api/data';
 import { type Song } from '@/api/subsonic';
 import { Cover } from '@/components/Cover';
 import { PlayingBars } from '@/components/PlayingBars';
@@ -406,10 +406,12 @@ export default function QueueScreen() {
       <SheetModal openRef={menuRef}>
         {(close) => (
           <>
-            {/* An episode's id means nothing to the server, so only the
-                server songs in the queue can go into a playlist — and when
-                the queue holds nothing else, the action is not offered. */}
-            {queue.some((s) => !s.podcastChannelId) ? (
+            {/* Only the tracks the server can name go into a playlist: an
+                episode's id means nothing to it, and so does a station's — its
+                id belongs to the station list. `canGoIntoPlaylist` is the rule
+                the heart's hold and the song menu read as well, and when the
+                queue holds nothing else, the action is not offered. */}
+            {queue.some(canGoIntoPlaylist) ? (
               <Pressable
                 style={({ pressed }) => [styles.action, pressed && { opacity: 0.6 }]}
                 onPress={() => {
@@ -417,7 +419,7 @@ export default function QueueScreen() {
                   const server = usePlayerStore
                     .getState()
                     .queue
-                    .filter((s) => !s.podcastChannelId);
+                    .filter(canGoIntoPlaylist);
                   usePlaylistPicker.getState().open(server);
                 }}
               >
