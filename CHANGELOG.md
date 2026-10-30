@@ -36,6 +36,7 @@ Releases before 0.2.1 are only listed on the
 - A cover on screen no longer turns into the placeholder when the app goes offline.
 - "Download over Wi-Fi only" now stops a download that is running when the Wi-Fi drops, instead of carrying on over mobile data.
 - Cover art no longer passes your server login to other apps that read what is playing (lock screen widgets, watches, the car). On Android Automotive the covers in the browse lists show up again.
+- The Library's "All" tab no longer keeps its podcast rows frozen: a pull there re-reads the favorited shows and hearted episodes too, so what the Podcasts tab just brought in shows up without leaving the screen.
 - The screen shown when something crashes is now in your language instead of always in Spanish.
 
 ## [0.8.4] - 2026-10-20
