@@ -8,7 +8,7 @@ import { publicHttpsUrl } from './artworkSources';
 import { loadSignatureImage, type LoadedArtistSignature } from './signatureImage';
 
 const CACHE_DIR = `${FileSystem.documentDirectory}artist-signatures/`;
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 const TTL = 7 * 24 * 60 * 60 * 1000;
 const MISS_TTL = 5 * 60 * 1000;
 
@@ -46,9 +46,9 @@ export async function getArtistSignature(name: string, api = SIGNATURE_API, tint
   }
   try {
     const saved = JSON.parse(await FileSystem.readAsStringAsync(file));
-    // Version 3 is eligible only for revalidation/offline recovery, never a
+    // Older schemas are eligible only for revalidation/offline recovery, never a
     // fresh seven-day hit. The exact name also guards against hash collisions.
-    if ([3, CACHE_VERSION].includes(saved.version) && saved.key === key && Number.isFinite(saved.at)) {
+    if ([3, 4, CACHE_VERSION].includes(saved.version) && saved.key === key && Number.isFinite(saved.at)) {
       cached = { candidates: artistSignatureCandidates(saved.response, source), at: saved.at, version: saved.version, found: saved.found === true };
     }
   } catch { /* A cache miss never prevents the normal artist header. */ }
