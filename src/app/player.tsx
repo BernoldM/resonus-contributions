@@ -1167,7 +1167,14 @@ export default function PlayerScreen() {
     <GestureDetector gesture={dismissPan}>
       <Animated.View style={[styles.root, rootStyle]}>
         {fullBleed ? <StatusBar style={headerInk === '#171717' ? 'dark' : 'light'} /> : null}
-        <Animated.View style={[StyleSheet.absoluteFill, bgStyle]} />
+        {fullBleed ? (
+          // Match the cover gradient's endpoint in the same React render.
+          // A separately animated base can retain its old shade on return
+          // from the background, exposing a hard edge below the artwork.
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: bottomEdge }]} />
+        ) : (
+          <Animated.View style={[StyleSheet.absoluteFill, bgStyle]} />
+        )}
         {fullBleed && !inlineLyrics ? (
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, animatedBgStyle]}>
             <View style={{ height: insets.top + headerHeight, backgroundColor: topEdge }} />
