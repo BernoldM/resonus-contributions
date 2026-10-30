@@ -912,9 +912,8 @@ function AllTab({ query, onNew }: { query: string; onNew?: () => void }) {
   const refresh = () => {
     lists.refetch();
     starred.refetch();
-    // The hearted shows and episodes are rows here too; a pull has to
-    // re-read them, as PodcastsTab does with its own pair — without
-    // these the mixed list kept them frozen for the whole session.
+    // The hearted shows and episodes are rows here too, and without these the
+    // mixed list kept them frozen for the whole session.
     podcastsQ.refetch();
     episodesQ.refetch();
   };
