@@ -41,6 +41,7 @@ Releases before 0.2.1 are only listed on the
 - Android Auto now updates a list that is already open when the library finishes loading.
 - Albums in Android Auto no longer open empty when they are beyond the first 40 loaded.
 - Android Auto no longer crashes on a queue with the same song twice, and shows what is playing when it connects after playback started.
+- On iOS, tapping the song on the lock screen now opens the app.
 - The screen shown when something crashes is now in your language instead of always in Spanish.
 
 ## [0.8.4] - 2026-10-20
