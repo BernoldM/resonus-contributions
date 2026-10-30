@@ -9,6 +9,8 @@ Releases before 0.2.1 are only listed on the
 
 ## [Unreleased]
 
+## [0.8.5] - 2026-10-30
+
 ### Added
 
 - Playback speed: a slider and −/+ buttons in steps of 0.01, a Preserve pitch switch that, turned off, lets the pitch follow the speed like a record, and the resulting BPM when the song has one (#277).
