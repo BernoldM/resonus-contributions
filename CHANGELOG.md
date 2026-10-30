@@ -9,6 +9,10 @@ Releases before 0.2.1 are only listed on the
 
 ## [Unreleased]
 
+### Fixed
+
+- The progress bar looks the same on every Android phone.
+
 ## [0.8.5] - 2026-10-30
 
 ### Added

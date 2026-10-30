@@ -48,6 +48,7 @@
       "./plugins/withTrimmedPermissions",
       "./plugins/withAppLocales",
       "./plugins/withoutUserScriptSandboxing",
+      "./plugins/withFixedSeekBar",
       "./plugins/withResonusWidget",
       "expo-router",
       [
