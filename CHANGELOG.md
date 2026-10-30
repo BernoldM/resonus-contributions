@@ -12,6 +12,7 @@ Releases before 0.2.1 are only listed on the
 ### Fixed
 
 - The progress bar looks the same on every Android phone.
+- Next and previous from other apps and devices, like Garmin watches, should now work (#307).
 
 ## [0.8.5] - 2026-10-30
 
