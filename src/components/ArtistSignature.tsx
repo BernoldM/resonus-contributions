@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 
 import { useT } from '@/i18n';
-import { getArtistSignature } from '@/lib/signatureCache';
-import { getAppleArtistArt } from '@/lib/appleArtistArtCache';
-import { loadSignatureImage } from '@/lib/signatureImage';
+import { getArtistHeaderSignature } from '@/lib/artistHeaderSignature';
 import { useAuthStore } from '@/store/auth';
 import { colors, fontSize, spacing } from '@/theme';
 import { useSettings } from '@/store/settings';
@@ -19,27 +17,17 @@ export function ArtistSignature({ name, width }: { name: string; width: number }
   const appleLogos = useSettings((s) => s.appleArtistLogos);
   const offline = useAuthStore((s) => s.offline);
   const api = useSettings((s) => s.artistSignaturesApi);
-  const { data } = useQuery({
-    queryKey: ['artist-signature-v5', api, name, offline, colors.text],
-    queryFn: () => getArtistSignature(name, api, colors.text),
-    enabled: enabled && !!publicHttpsUrl(api),
+  const { data: signature } = useQuery({
+    queryKey: ['artist-header-signature-v6', enabled, api, appleLogos, name, offline, colors.text],
+    queryFn: () => getArtistHeaderSignature(name, {
+      api: enabled ? api : undefined, appleLogos, offline, tintColor: colors.text,
+    }),
+    enabled: appleLogos || (enabled && !!publicHttpsUrl(api)),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
   const [displayed, setDisplayed] = useState<ImageRef>();
   const [failed, setFailed] = useState<ImageRef>();
-  const providerSignature = enabled && publicHttpsUrl(api) ? data : null;
-  const { data: appleSignature } = useQuery({
-    queryKey: ['apple-artist-logo-v5', name, offline, colors.text],
-    queryFn: async () => {
-      const art = await getAppleArtistArt(name);
-      return art?.logo ? loadSignatureImage(art.logo, offline, colors.text) : null;
-    },
-    enabled: appleLogos && !providerSignature,
-    staleTime: 30 * 60 * 1000,
-    retry: false,
-  });
-  const signature = providerSignature ?? (appleLogos ? appleSignature : null);
   const shown = !!signature && displayed === signature.image && failed !== signature.image;
   const imageWidth = Math.min(280, width - spacing.lg * 2);
   return (

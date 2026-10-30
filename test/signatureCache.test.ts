@@ -9,17 +9,13 @@ const png = 'https://upload.wikimedia.org/signature.png';
 const svg = 'https://upload.wikimedia.org/second.svg';
 const leona = JSON.parse(readFileSync(new URL('./fixtures/signatures/leona-provider.json', import.meta.url), 'utf8'));
 const emilia = JSON.parse(readFileSync(new URL('./fixtures/signatures/emilia-provider.json', import.meta.url), 'utf8'));
-const response = (...urls: string[]) => ({ signatures: urls.map(asset => ({ asset,
+const response = (...urls: string[]) => ({ signatures: urls.map(asset => ({ asset, verification: 'verified',
   source: { url: 'https://commons.wikimedia.org/wiki/File:Signature.svg' },
   license: { status: 'known', name: 'PD-signature' } })) });
-const mask = (alpha: boolean) => {
-  const bytes = new Uint8Array(25); bytes[2] = alpha ? 128 : 0; bytes[5] = 0x53;
-  return Buffer.from(bytes).toString('base64');
-};
 const state = {
   offline: false, saved: undefined as Record<string, unknown> | undefined,
-  response: leona as unknown, status: 200, failFetch: false, failHash: false, animated: false,
-  masks: new Map<string, string>(), files: new Map<string, string>(), loaded: [] as string[],
+  response: leona as unknown, status: 200, failFetch: false, failValidation: false, animated: false,
+  masks: new Map<string, boolean>(), files: new Map<string, string>(), loaded: [] as string[],
   refs: [] as { uri: string; options: { tintColor: string }; released: boolean }[], written: undefined as Record<string, unknown> | undefined, fetches: 0,
 };
 Object.assign(globalThis, { __signatureCacheTest: state });
@@ -45,9 +41,10 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
         const ref={uri,options,isAnimated:s.animated,released:false,release(){this.released=true}};
         s.refs.push(ref);return ref;
       },
-      generateThumbhashAsync:async ref=>{if(s.failHash)throw Error('hash failed');return s.masks.get(ref.uri)},
+
     };
   `) };
+  if (specifier === './signatureInk' && context.parentURL?.endsWith('/signatureImage.ts')) return { shortCircuit: true, url: stub(prelude+`export async function hasVisibleSignatureInk(ref){if(s.failValidation)throw Error('pixel validation failed');return s.masks.get(ref.uri)===true}`) };
   if (specifier === '@/api/netGate') return { shortCircuit: true, url: stub(prelude+'export const isManualOffline=()=>s.offline;') };
   if (specifier === './localLibrary' && context.parentURL?.endsWith('/signatureCache.ts')) return { shortCircuit: true, url: stub('export const hashKey=()=>"hash";') };
   return next(specifier, context);
@@ -58,18 +55,18 @@ const lookup = () => getArtistSignature('Leona Lewis', api);
 
 beforeEach(() => {
   Object.assign(state, { offline: false, saved: undefined, response: leona, status: 200,
-    failFetch: false, failHash: false, animated: false, masks: new Map(), files: new Map(),
+    failFetch: false, failValidation: false, animated: false, masks: new Map(), files: new Map(),
     loaded: [], refs: [], written: undefined, fetches: 0 });
 });
 
 describe('signature pixel validation and cache', () => {
   it('tints the decoded image itself because view tint does not recolor ImageRef sources', async () => {
-    state.response = response(png); state.masks.set(png, mask(true));
+    state.response = response(png); state.masks.set(png, true);
     await lookup();
     assert.equal(state.refs[0].options.tintColor, '#ffffff');
   });
   it('uses the requested theme ink for separately decoded references', async () => {
-    state.response = response(png); state.masks.set(png, mask(true));
+    state.response = response(png); state.masks.set(png, true);
     await getArtistSignature('Leona Lewis', api, '#171717');
     await getArtistSignature('Leona Lewis', api, '#ffffff');
     assert.deepEqual(state.refs.map(ref => ref.options.tintColor), ['#171717', '#ffffff']);
@@ -78,7 +75,7 @@ describe('signature pixel validation and cache', () => {
     state.offline = true;
     state.saved = { version: 4, key: key.replace('Leona Lewis', 'Emilia'), at: Date.now(), found: true, response: emilia };
     for (const row of emilia.signatures) state.files.set(row.asset.url, '/cache/emilia');
-    state.masks.set('file:///cache/emilia', mask(true));
+    state.masks.set('file:///cache/emilia', true);
     assert.equal(await getArtistSignature('Emilia', api), null);
     assert.deepEqual(state.loaded, []);
     assert.equal(state.fetches, 0);
@@ -93,17 +90,17 @@ describe('signature pixel validation and cache', () => {
     assert.equal(await getArtistSignature('Leona Lewis'), null);
     assert.equal(state.fetches, 0);
   });
-  it('revalidates v3 Leona metadata and stores a short-lived v4 miss', async () => {
+  it('revalidates v3 Leona metadata and stores a short-lived v5 miss', async () => {
     state.saved = { version: 3, key, at: Date.now(), response: leona };
     assert.equal(await lookup(), null);
     assert.equal(state.fetches, 1);
     assert.deepEqual(state.loaded, []);
-    assert.equal(state.written?.version, 4);
+    assert.equal(state.written?.version, 5);
     assert.equal(state.written?.found, false);
   });
   it('rejects opaque pixels and returns the exact checked next image', async () => {
     state.response = response(svg, png);
-    state.masks.set(svg, mask(false)); state.masks.set(png, mask(true));
+    state.masks.set(svg, false); state.masks.set(png, true);
     const result = await lookup();
     assert.equal(result?.imageUrl, png);
     assert.equal(result?.image, state.refs[1]);
@@ -111,12 +108,12 @@ describe('signature pixel validation and cache', () => {
     assert.equal(state.refs[1].released, false);
   });
   it('keeps the name if every candidate is opaque', async () => {
-    state.response = response(png); state.masks.set(png, mask(false));
+    state.response = response(png); state.masks.set(png, false);
     assert.equal(await lookup(), null);
     assert.equal(state.written?.found, false);
   });
   it('rejects animated masks and releases their native reference', async () => {
-    state.response = response(png); state.masks.set(png, mask(true)); state.animated = true;
+    state.response = response(png); state.masks.set(png, true); state.animated = true;
     assert.equal(await lookup(), null);
     assert.equal(state.refs[0].released, true);
   });
@@ -125,8 +122,8 @@ describe('signature pixel validation and cache', () => {
     assert.equal(await lookup(), null);
     assert.equal(state.written, undefined);
   });
-  it('releases the image if generating its mask fails', async () => {
-    state.response = response(png); state.masks.set(png, mask(true)); state.failHash = true;
+  it('releases the image if native pixel validation fails', async () => {
+    state.response = response(png); state.masks.set(png, true); state.failValidation = true;
     assert.equal(await lookup(), null);
     assert.equal(state.refs[0].released, true);
     assert.equal(state.written, undefined);
@@ -134,7 +131,7 @@ describe('signature pixel validation and cache', () => {
   it('revalidates old usable images offline with only a local file', async () => {
     state.offline = true;
     state.saved = { version: 3, key, at: Date.now(), response: response(svg) };
-    state.files.set(svg, '/cache/signature'); state.masks.set('file:///cache/signature', mask(true));
+    state.files.set(svg, '/cache/signature'); state.masks.set('file:///cache/signature', true);
     assert.equal((await lookup())?.imageUrl, svg);
     assert.deepEqual(state.loaded, ['file:///cache/signature']);
     assert.equal(state.fetches, 0);
@@ -146,15 +143,23 @@ describe('signature pixel validation and cache', () => {
   });
   it('preserves a valid old image during a provider outage', async () => {
     state.failFetch = true; state.saved = { version: 3, key, at: Date.now(), response: response(svg) };
-    state.masks.set(svg, mask(true));
+    state.masks.set(svg, true);
     assert.equal((await lookup())?.imageUrl, svg);
     assert.equal(state.written, undefined);
   });
   it('revalidates a positive v4 hit and retries if the image is now opaque', async () => {
     state.saved = { version: 4, key, at: Date.now(), found: true, response: response(svg) };
-    state.masks.set(svg, mask(false)); state.masks.set(png, mask(true)); state.response = response(png);
+    state.masks.set(svg, false); state.masks.set(png, true); state.response = response(png);
     assert.equal((await lookup())?.imageUrl, png);
     assert.equal(state.fetches, 1);
+  });
+  it('retries fresh negative v4 entries after replacing lossy mask validation', async () => {
+    state.saved = { version: 4, key, at: Date.now(), found: false, response: response(png) };
+    state.response = response(png); state.masks.set(png, true);
+    assert.equal((await lookup())?.imageUrl, png);
+    assert.equal(state.fetches, 1);
+    assert.equal(state.written?.version, 5);
+    assert.equal(state.written?.found, true);
   });
   it('rejects cache key collisions', async () => {
     state.offline = true; state.saved = { version: 4, key: key+'other', at: Date.now(), response: response(svg) };
@@ -162,7 +167,7 @@ describe('signature pixel validation and cache', () => {
     assert.deepEqual(state.loaded, []);
   });
   it('keeps a fresh negative hit for five minutes', async () => {
-    state.saved = { version: 4, key, at: Date.now(), found: false, response: { signatures: [] } };
+    state.saved = { version: 5, key, at: Date.now(), found: false, response: { signatures: [] } };
     assert.equal(await lookup(), null);
     assert.equal(state.fetches, 0);
   });
