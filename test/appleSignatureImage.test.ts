@@ -16,12 +16,11 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
           s.tints.push(options.tintColor);
           return {isAnimated:false,release(){s.released=true}};
         },
-        generateThumbhashAsync: async () => {
-          const hash = new Uint8Array(25); hash[2] = s.opaque ? 0 : 128; hash[5] = 0x53;
-          return btoa(String.fromCharCode(...hash));
-        },
+
       };
     `)}` };
+  if (specifier === './signatureInk' && context.parentURL?.endsWith('/signatureImage.ts')) return { shortCircuit: true,
+    url: `data:text/javascript,${encodeURIComponent(`const s=globalThis.__appleSignatureImageTest;export async function hasVisibleSignatureInk(){return !s.opaque}`)}` };
   return next(specifier, context);
 } });
 const { loadSignatureImage } = await import('@/lib/signatureImage');

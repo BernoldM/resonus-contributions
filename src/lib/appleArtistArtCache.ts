@@ -20,14 +20,19 @@ function cachedArt(value: unknown): AppleArtistArt | null {
     logo: parseArtistLogo(row.logo ? { url: row.logo.imageUrl, width: row.logo.aspect, height: 1 } : null) };
 }
 
+async function readSaved(name: string): Promise<{ at: number; art: AppleArtistArt | null } | undefined> {
+  const key = normalizedArtistName(name);
+  const file = `${CACHE}${hashKey(key)}.json`;
+  try {
+    const data = JSON.parse(await FileSystem.readAsStringAsync(file));
+    if (data.version === 1 && data.key === key && Number.isFinite(data.at)) return { at: data.at, art: cachedArt(data.art) };
+  } catch { /* First lookup or evicted cache. */ }
+}
+
 async function lookup(name: string): Promise<AppleArtistArt | null> {
   const key = normalizedArtistName(name);
   const file = `${CACHE}${hashKey(key)}.json`;
-  let saved: { at: number; art: AppleArtistArt | null } | undefined;
-  try {
-    const data = JSON.parse(await FileSystem.readAsStringAsync(file));
-    if (data.version === 1 && data.key === key && Number.isFinite(data.at)) saved = { at: data.at, art: cachedArt(data.art) };
-  } catch { /* First lookup or evicted cache. */ }
+  const saved = await readSaved(name);
   if (isManualOffline()) {
     const art = saved?.art;
     if (!art) return null;
@@ -75,4 +80,13 @@ export function getAppleArtistArt(name: string): Promise<AppleArtistArt | null> 
     requests.set(key, task);
   }
   return task;
+}
+
+/** A cached logo does not require the separate artist hero image to be cached.
+ * The signature loader checks the logo's own local image before offline use.
+ */
+export async function getAppleArtistLogo(name: string) {
+  if (!name.trim() || name.length > 300) return null;
+  const art = isManualOffline() ? (await readSaved(name))?.art : await getAppleArtistArt(name);
+  return art?.logo ?? null;
 }
