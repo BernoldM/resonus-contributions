@@ -59,11 +59,11 @@ startup, cancellation, service teardown, strict response scopes, bounded
 retention and snapshots. Existing duplicate-track and playback-mirror tests
 must continue to pass.
 
-Physical head-unit verification remains necessary: open “The Eminem Show
-(Expanded Edition)” from Most played without first playing it on the phone,
-check all 38 songs including disc 2, then repeat with the phone locked and
-verify an album with downloaded tracks in offline mode. Test failure/retry
-without clearing app data. Automated checks are not a completed head-unit test.
+A combined local build was tested on a physical Android Auto head unit: the
+previously empty album opened, showed its tracks and played successfully.
+That is separate from device testing of the extracted public branch. Remaining
+manual checks include selecting a disc-2 track, browsing with the phone locked,
+an offline downloaded album and failure/retry without clearing app data.
 
 References: [Media3 asynchronous browse callback](https://developer.android.com/reference/androidx/media3/session/MediaLibraryService.MediaLibrarySession.Callback#onGetChildren(androidx.media3.session.MediaLibraryService.MediaLibrarySession,androidx.media3.session.MediaSession.ControllerInfo,java.lang.String,int,int,androidx.media3.session.MediaLibraryService.LibraryParams)),
 [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/).
