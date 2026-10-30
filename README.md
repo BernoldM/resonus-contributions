@@ -10,6 +10,19 @@
   Android, with an experimental iOS build.
 </p>
 
+<p align="center">
+  <a href="https://www.navidrome.org"><img src="https://img.shields.io/badge/Navidrome-1F2A44" alt="Works with Navidrome" /></a>
+  <a href="https://opensubsonic.netlify.app"><img src="https://img.shields.io/badge/OpenSubsonic-2E7D32" alt="Works with OpenSubsonic" /></a>
+  <a href="https://jellyfin.org"><img src="https://img.shields.io/badge/Jellyfin-00A4DC?logo=jellyfin&logoColor=white" alt="Works with Jellyfin" /></a>
+  <a href="https://ampache.org"><img src="https://img.shields.io/badge/Ampache-E8590C" alt="Works with Ampache" /></a>
+  <br />
+  <a href="https://github.com/juananzzz/resonus/actions/workflows/checks.yml"><img src="https://github.com/juananzzz/resonus/actions/workflows/checks.yml/badge.svg" alt="Checks" /></a>
+  <a href="https://github.com/juananzzz/resonus/releases/latest"><img src="https://img.shields.io/github/v/release/juananzzz/resonus" alt="Latest release" /></a>
+  <a href="https://github.com/juananzzz/resonus/releases"><img src="https://img.shields.io/github/downloads/juananzzz/resonus/total?logo=github&logoColor=white&label=downloads" alt="GitHub downloads" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0" /></a>
+  <a href="https://github.com/juananzzz/resonus/stargazers"><img src="https://img.shields.io/github/stars/juananzzz/resonus?style=flat" alt="Stars" /></a>
+</p>
+
 ---
 
 <p align="center">
