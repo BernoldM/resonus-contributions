@@ -13,6 +13,7 @@ Releases before 0.2.1 are only listed on the
 
 - Playback speed: a slider and −/+ buttons in steps of 0.01, a Preserve pitch switch that, turned off, lets the pitch follow the speed like a record, and the resulting BPM when the song has one (#277).
 - Podcasts: download episodes to play offline, favorite them, queue them, and find them in Library, search and Home. Thanks to Garrit Schröder.
+- Optional pill shapes for the navigation bar and the Mini Player.
 - Holding the heart in the player or the Mini Player opens the sheet to add the song to a playlist (#286). Thanks to @Lennardsmw.
 
 ### Changed
