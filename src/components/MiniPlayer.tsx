@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { COVER, songCoverUrl, type Song } from '@/api/data';
+import { COVER, canGoIntoPlaylist, songCoverUrl, type Song } from '@/api/data';
 import { episodeHeart, heartedSong } from '@/api/podcasts';
 import { usePodcastFavoriteIds } from '@/lib/podcastFavorites';
 import { useDominantColor } from '@/hooks/useDominantColor';
@@ -27,6 +27,7 @@ import { router } from 'expo-router';
 import { revealOffset } from '@/lib/playerReveal';
 import { pushOnce } from '@/lib/pushOnce';
 import { currentSong, useLiveInfo, usePlayerStore } from '@/store/player';
+import { usePlaylistPicker } from '@/store/playlistPicker';
 import { CONTENT_MAX_WIDTH, useScreenSize } from '@/hooks/useScreenSize';
 import { useSettings } from '@/store/settings';
 import { useToast } from '@/store/toast';
@@ -206,6 +207,16 @@ export function MiniPlayer() {
   const favorited = heartedSong(song, podcastFav, favIds);
   // The heart writes the device's own SQLite favorite for an episode.
   const podcastHeart = episodeHeart(song);
+  /**
+   * What holding the heart does: the app's playlist sheet, with this song
+   *  (#286). The sheet is the one mounted in the root layout above this bar,
+   *  so opening it is a store write and no navigation. A station's and an
+   *  episode's id names no track a playlist can take (`canGoIntoPlaylist`),
+   *  so those are handed nothing and their heart stays a tap, as it was.
+   */
+  const openPlaylistSheet = canGoIntoPlaylist(song)
+    ? () => usePlaylistPicker.getState().open([song])
+    : undefined;
 
   return (
     <GestureDetector gesture={pan}>
@@ -237,7 +248,13 @@ export function MiniPlayer() {
         </View>
       </Animated.View>
       {buttons === 'favorite' ? (
-        <FavoriteButton id={song.id} starred={favorited} podcast={podcastHeart} size={24} />
+        <FavoriteButton
+          id={song.id}
+          starred={favorited}
+          podcast={podcastHeart}
+          size={24}
+          hold={openPlaylistSheet}
+        />
       ) : null}
       {buttons === 'previousNext' ? (
         <Pressable
