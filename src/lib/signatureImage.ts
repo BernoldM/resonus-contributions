@@ -1,6 +1,7 @@
 import { Image, type ImageRef } from 'expo-image';
 
-import { isUsableSignatureThumbhash, type ArtistSignature } from './artistSignatures';
+import type { ArtistSignature } from './artistSignatures';
+import { hasVisibleSignatureInk } from './signatureInk';
 
 export type LoadedArtistSignature = ArtistSignature & { image: ImageRef };
 
@@ -13,7 +14,7 @@ export async function loadSignatureImage(signature: ArtistSignature, offline: bo
   const image = await Image.loadAsync(uri, { maxWidth: 1000, maxHeight: 400, tintColor });
   let accepted = false;
   try {
-    accepted = !image.isAnimated && isUsableSignatureThumbhash(await Image.generateThumbhashAsync(image));
+    accepted = !image.isAnimated && await hasVisibleSignatureInk(image);
     return accepted ? { ...signature, image } : null;
   } finally {
     // Successful references belong to the query/view until garbage collection.

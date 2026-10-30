@@ -33,19 +33,17 @@ export function artistSignatureCandidates(value: unknown, api = SIGNATURE_API): 
   // Ambiguous matches must never substitute somebody else's autograph.
   if (!Array.isArray(root.signatures)) return [];
   const entries = root.signatures.slice(0, 100).map(record);
-  const artist = record(root.artist);
-  const linkedArtist = (typeof artist.musicbrainz_id === 'string' && /^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(artist.musicbrainz_id))
-    || (typeof artist.wikidata_id === 'string' && /^Q[1-9]\d*$/.test(artist.wikidata_id));
-  // A short name can return several different people's autographs (Emilia).
-  // License/size ranking cannot resolve multiple unverified assets without a
-  // linked artist identity. Keep verified entries, otherwise use logo/name.
-  const unverifiedAssets = new Set(entries.filter((entry) => entry.verification === 'unverified')
+  const verified = (entry: Record<string, unknown>) => ['verified', 'artist_verified'].includes(String(entry.verification));
+  // Even a correct requested MusicBrainz ID can accompany unrelated assets
+  // (Queen returned royal autographs). It does not verify those signatures.
+  // Missing/unknown verification is unverified too; rank only after identity.
+  const unverifiedAssets = new Set(entries.filter((entry) => !verified(entry))
     .map((entry) => signatureAssetUrl(entry, api))
     .filter((url): url is string => !!url).map((url) => new URL(url).origin + new URL(url).pathname));
-  const ambiguous = !linkedArtist && unverifiedAssets.size > 1;
+  const verifiedOnly = unverifiedAssets.size > 1 || entries.some(verified);
   const candidates: { signature: ArtistSignature; score: number; area: number }[] = [];
   for (const signature of entries) {
-    if (ambiguous && !['verified', 'artist_verified'].includes(String(signature.verification))) continue;
+    if (verifiedOnly && !verified(signature)) continue;
     const asset = record(signature.asset);
     const imageUrl = signatureAssetUrl(signature, api);
     if (!imageUrl) continue;
@@ -79,19 +77,4 @@ export function artistSignatureCandidates(value: unknown, api = SIGNATURE_API): 
 
 export function parseArtistSignature(value: unknown, api = SIGNATURE_API): ArtistSignature | null {
   return artistSignatureCandidates(value, api)[0] ?? null;
-}
-
-/** Expo's native ThumbHash encodes the decoded image's alpha, not its file type.
- * Require transparency and varying visible ink. Opaque/empty/uniform masks
- * cannot replace a name. This is a coarse display check, not identity proof.
- * Format: https://github.com/evanw/thumbhash/blob/master/js/thumbhash.js
- */
-export function isUsableSignatureThumbhash(value: string): boolean {
-  try {
-    if (value.length > 128) return false;
-    const hash = globalThis.atob(value);
-    if (hash.length < 20 || !(hash.charCodeAt(2) & 0x80)) return false;
-    const alpha = hash.charCodeAt(5);
-    return (alpha & 15) < 15 && (alpha >> 4) > 0;
-  } catch { return false; }
 }
