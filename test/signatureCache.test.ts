@@ -8,6 +8,7 @@ const key = `${api}/\nLeona Lewis`;
 const png = 'https://upload.wikimedia.org/signature.png';
 const svg = 'https://upload.wikimedia.org/second.svg';
 const leona = JSON.parse(readFileSync(new URL('./fixtures/signatures/leona-provider.json', import.meta.url), 'utf8'));
+const emilia = JSON.parse(readFileSync(new URL('./fixtures/signatures/emilia-provider.json', import.meta.url), 'utf8'));
 const response = (...urls: string[]) => ({ signatures: urls.map(asset => ({ asset,
   source: { url: 'https://commons.wikimedia.org/wiki/File:Signature.svg' },
   license: { status: 'known', name: 'PD-signature' } })) });
@@ -19,7 +20,7 @@ const state = {
   offline: false, saved: undefined as Record<string, unknown> | undefined,
   response: leona as unknown, status: 200, failFetch: false, failHash: false, animated: false,
   masks: new Map<string, string>(), files: new Map<string, string>(), loaded: [] as string[],
-  refs: [] as { uri: string; released: boolean }[], written: undefined as Record<string, unknown> | undefined, fetches: 0,
+  refs: [] as { uri: string; options: { tintColor: string }; released: boolean }[], written: undefined as Record<string, unknown> | undefined, fetches: 0,
 };
 Object.assign(globalThis, { __signatureCacheTest: state });
 const stub = (code: string) => `data:text/javascript,${encodeURIComponent(code)}`;
@@ -39,9 +40,9 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   if (specifier === 'expo-image') return { shortCircuit: true, url: stub(prelude + `
     export const Image={
       getCachePathAsync:async uri=>s.files.get(uri)??null,
-      loadAsync:async uri=>{
+      loadAsync:async (uri,options)=>{
         s.loaded.push(uri); if(!s.masks.has(uri)) throw Error('image decode failed');
-        const ref={uri,isAnimated:s.animated,released:false,release(){this.released=true}};
+        const ref={uri,options,isAnimated:s.animated,released:false,release(){this.released=true}};
         s.refs.push(ref);return ref;
       },
       generateThumbhashAsync:async ref=>{if(s.failHash)throw Error('hash failed');return s.masks.get(ref.uri)},
@@ -62,6 +63,32 @@ beforeEach(() => {
 });
 
 describe('signature pixel validation and cache', () => {
+  it('tints the decoded image itself because view tint does not recolor ImageRef sources', async () => {
+    state.response = response(png); state.masks.set(png, mask(true));
+    await lookup();
+    assert.equal(state.refs[0].options.tintColor, '#ffffff');
+  });
+  it('uses the requested theme ink for separately decoded references', async () => {
+    state.response = response(png); state.masks.set(png, mask(true));
+    await getArtistSignature('Leona Lewis', api, '#171717');
+    await getArtistSignature('Leona Lewis', api, '#ffffff');
+    assert.deepEqual(state.refs.map(ref => ref.options.tintColor), ['#171717', '#ffffff']);
+  });
+  it('rejects cached ambiguous Emilia signatures offline without decoding or fetching', async () => {
+    state.offline = true;
+    state.saved = { version: 4, key: key.replace('Leona Lewis', 'Emilia'), at: Date.now(), found: true, response: emilia };
+    for (const row of emilia.signatures) state.files.set(row.asset.url, '/cache/emilia');
+    state.masks.set('file:///cache/emilia', mask(true));
+    assert.equal(await getArtistSignature('Emilia', api), null);
+    assert.deepEqual(state.loaded, []);
+    assert.equal(state.fetches, 0);
+  });
+  it('keeps the normal name and a short-lived miss for ambiguous matches', async () => {
+    state.response = emilia;
+    assert.equal(await getArtistSignature('Emilia', api), null);
+    assert.deepEqual(state.loaded, []);
+    assert.equal(state.written?.found, false);
+  });
   it('does not contact any source without a configured provider', async () => {
     assert.equal(await getArtistSignature('Leona Lewis'), null);
     assert.equal(state.fetches, 0);
