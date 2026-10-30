@@ -13,14 +13,26 @@ class CarAutoModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("CarAuto")
 
-    Events("play", "transport", "connect")
+    Events("play", "transport", "connect", "browse")
 
     OnCreate {
       instance = this@CarAutoModule
     }
 
     OnDestroy {
-      if (instance === this@CarAutoModule) instance = null
+      if (instance === this@CarAutoModule) {
+        browseReady = false
+        instance = null
+      }
+    }
+
+    Function("setBrowseReady") { ready: Boolean ->
+      browseReady = ready
+      if (ready) ResonusCarBrowserService.browseReady()
+    }
+
+    Function("completeBrowse") { requestId: String, json: String? ->
+      ResonusCarBrowserService.completeBrowse(requestId, json)
     }
 
     Function("setNodes") { json: String ->
@@ -88,6 +100,12 @@ class CarAutoModule : Module() {
     sendEvent("play", payload)
   }
 
+  fun emitBrowse(requestId: String, parentId: String, profile: String): Boolean {
+    if (!browseReady) return false
+    sendEvent("browse", mapOf("requestId" to requestId, "parentId" to parentId, "profile" to profile))
+    return true
+  }
+
   /** A browser asked for the root, which is a car opening the app. JS answers
    *  by filling the tree in, so what it holds is not whatever was left there
    *  the last time somebody had the phone in their hand. */
@@ -107,6 +125,7 @@ class CarAutoModule : Module() {
   }
 
   companion object {
+    @Volatile private var browseReady = false
     @Volatile var instance: CarAutoModule? = null
       private set
   }
