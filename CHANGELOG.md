@@ -39,6 +39,7 @@ Releases before 0.2.1 are only listed on the
 - Dates on the History screen now follow the app language.
 - Pulling to refresh on the Library's All tab now also updates podcasts.
 - Android Auto now updates a list that is already open when the library finishes loading.
+- Android Auto no longer crashes on a queue with the same song twice, and shows what is playing when it connects after playback started.
 - The screen shown when something crashes is now in your language instead of always in Spanish.
 
 ## [0.8.4] - 2026-10-20
