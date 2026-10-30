@@ -15,7 +15,7 @@ export function ArtistSignature({ name, width }: { name: string; width: number }
   const enabled = useSettings((s) => s.artistSignaturesEnabled);
   const api = useSettings((s) => s.artistSignaturesApi);
   const { data } = useQuery({
-    queryKey: ['artist-signature-v5', api, name, colors.text],
+    queryKey: ['artist-signature-v6', api, name, colors.text],
     queryFn: () => getArtistSignature(name, api, colors.text),
     enabled: enabled && !!publicHttpsUrl(api),
     staleTime: 5 * 60 * 1000,

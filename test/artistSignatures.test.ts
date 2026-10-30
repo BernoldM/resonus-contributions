@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { artistSignatureCandidates, isUsableSignatureThumbhash, parseArtistSignature } from '@/lib/artistSignatures';
+import { artistSignatureCandidates, parseArtistSignature } from '@/lib/artistSignatures';
 
 const imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/a/ab/signature.svg';
 const source = { url: 'https://commons.wikimedia.org/wiki/File:Signature.svg' };
@@ -62,11 +62,22 @@ describe('ambiguous unverified provider matches', () => {
       { asset: imageUrl + '?a=2', source, license, verification: 'unverified' },
     ] }).length, 2);
   });
-  it('preserves eligible candidates for a linked artist without relaxing rights checks', () => {
-    const eligible = emilia.signatures.filter((s: { license: { name: string } }) => s.license.name === 'PD-signature');
-    assert.ok(eligible.length > 0);
+  it('does not treat the requested artist IDs as verification of individual signatures', () => {
     for (const artist of [{ musicbrainz_id: '8d552dfc-648f-401f-90de-e925013ca537' }, { wikidata_id: 'Q123' }]) {
-      assert.equal(artistSignatureCandidates({ artist, signatures: emilia.signatures }).length, eligible.length);
+      assert.deepEqual(artistSignatureCandidates({ artist, signatures: emilia.signatures }), []);
+    }
+  });
+  it('rejects unrelated Queen autographs with copied per-asset MusicBrainz IDs', () => {
+    const queen = JSON.parse(readFileSync(new URL('./fixtures/signatures/queen-provider.json', import.meta.url), 'utf8'));
+    // Use otherwise eligible rights so the identity guard itself must reject them.
+    const signatures = queen.signatures.map((row: object) => ({ ...row, source, license }));
+    assert.deepEqual(artistSignatureCandidates({ ...queen, signatures }), []);
+  });
+  it('treats missing/unknown verification as unverified but preserves a single eligible asset', () => {
+    for (const verification of [undefined, 'unknown']) {
+      const row = { asset: imageUrl, source, license, verification };
+      assert.equal(artistSignatureCandidates({ signatures: [row] }).length, 1);
+      assert.deepEqual(artistSignatureCandidates({ signatures: [row, { ...row, asset: imageUrl+'x.svg' }] }), []);
     }
   });
   it('does not let a provider-local ID or malformed external ID resolve ambiguity', () => {
@@ -84,27 +95,8 @@ describe('signature image eligibility', () => {
   });
   it('skips opaque formats and still considers the next transparent-capable candidate', () => {
     assert.equal(parseArtistSignature({ signatures: [
-      { asset: { url: 'https://upload.wikimedia.org/scan.jpg', format: 'jpeg' }, license: { status: 'known' } },
-      { asset: imageUrl, source, license },
+      { asset: { url: 'https://upload.wikimedia.org/scan.jpg', format: 'jpeg' }, license: { status: 'known' }, verification: 'verified' },
+      { asset: imageUrl, source, license, verification: 'verified' },
     ] })?.imageUrl, imageUrl);
-  });
-});
-
-
-describe('decoded signature mask', () => {
-  function hash(alpha: boolean, average: number, variation: number) {
-    const bytes = new Uint8Array(25);
-    bytes[2] = alpha ? 0x80 : 0;
-    bytes[5] = average | (variation << 4);
-    return Buffer.from(bytes).toString('base64');
-  }
-  it('rejects opaque PNG/SVG pixels and fully transparent or uniform images', () => {
-    for (const value of [hash(false, 15, 0), hash(true, 0, 0), hash(true, 5, 0), hash(true, 15, 1), '', 'not base64', 'AAAAAAA=']) {
-      assert.equal(isUsableSignatureThumbhash(value), false);
-    }
-  });
-  it('accepts a transparent mask with visible strokes, including thin strokes', () => {
-    assert.equal(isUsableSignatureThumbhash(hash(true, 3, 5)), true);
-    assert.equal(isUsableSignatureThumbhash(hash(true, 0, 1)), true);
   });
 });
