@@ -38,6 +38,7 @@ Releases before 0.2.1 are only listed on the
 - A cover on screen no longer turns into the placeholder when the app goes offline.
 - "Download over Wi-Fi only" now stops a download that is running when the Wi-Fi drops, instead of carrying on over mobile data.
 - Cover art no longer passes your server login to other apps that read what is playing (lock screen widgets, watches, the car). On Android Automotive the covers in the browse lists show up again.
+- A tapped song no longer waits behind preloading and cover downloads on servers that fetch each track first (#269).
 - Dates on the History screen now follow the app language.
 - Pulling to refresh on the Library's All tab now also updates podcasts.
 - Android Auto now updates a list that is already open when the library finishes loading.
