@@ -5,11 +5,12 @@ import { isUsableSignatureThumbhash, type ArtistSignature } from './artistSignat
 export type LoadedArtistSignature = ArtistSignature & { image: ImageRef };
 
 /** Validate actual decoded pixels, then display that same image without a refetch. */
-export async function loadSignatureImage(signature: ArtistSignature, offline: boolean): Promise<LoadedArtistSignature | null> {
+export async function loadSignatureImage(signature: ArtistSignature, offline: boolean, tintColor = '#ffffff'): Promise<LoadedArtistSignature | null> {
   const path = offline ? await Image.getCachePathAsync(signature.imageUrl) : null;
   if (offline && !path) return null;
   const uri = path ? `file://${path.replace(/^file:\/\//, '')}` : signature.imageUrl;
-  const image = await Image.loadAsync(uri, { maxWidth: 1000, maxHeight: 400 });
+  // ImageRef sources must be tinted while decoding; view tint cannot recolor them.
+  const image = await Image.loadAsync(uri, { maxWidth: 1000, maxHeight: 400, tintColor });
   let accepted = false;
   try {
     accepted = !image.isAnimated && isUsableSignatureThumbhash(await Image.generateThumbhashAsync(image));

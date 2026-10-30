@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { isUsableSignatureThumbhash, parseArtistSignature } from '@/lib/artistSignatures';
+import { artistSignatureCandidates, isUsableSignatureThumbhash, parseArtistSignature } from '@/lib/artistSignatures';
 
 const imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/a/ab/signature.svg';
 const source = { url: 'https://commons.wikimedia.org/wiki/File:Signature.svg' };
@@ -44,6 +44,33 @@ describe('artist signature provider boundary', () => {
   });
   it('bounds extreme artwork proportions', () => {
     assert.equal(parseArtistSignature(response({ asset: { url: imageUrl, width: 1e30, height: 1 } }))?.aspect, 12);
+  });
+});
+
+describe('ambiguous unverified provider matches', () => {
+  const emilia = JSON.parse(readFileSync(new URL('./fixtures/signatures/emilia-provider.json', import.meta.url), 'utf8'));
+  it('rejects the real Emilia response instead of ranking other people by licence and size', () => {
+    assert.deepEqual(artistSignatureCandidates(emilia), []);
+  });
+  it('still accepts a verified eligible candidate from an otherwise ambiguous response', () => {
+    const verified = { asset: imageUrl, source, license, verification: 'artist_verified' };
+    assert.deepEqual(artistSignatureCandidates({ ...emilia, signatures: [...emilia.signatures, verified] }).map(s => s.imageUrl), [imageUrl]);
+  });
+  it('does not treat repeated versions of the same asset URL as different people', () => {
+    assert.equal(artistSignatureCandidates({ signatures: [
+      { asset: imageUrl + '?a=1', source, license, verification: 'unverified' },
+      { asset: imageUrl + '?a=2', source, license, verification: 'unverified' },
+    ] }).length, 2);
+  });
+  it('preserves eligible candidates for a linked artist without relaxing rights checks', () => {
+    const eligible = emilia.signatures.filter((s: { license: { name: string } }) => s.license.name === 'PD-signature');
+    assert.ok(eligible.length > 0);
+    for (const artist of [{ musicbrainz_id: '8d552dfc-648f-401f-90de-e925013ca537' }, { wikidata_id: 'Q123' }]) {
+      assert.equal(artistSignatureCandidates({ artist, signatures: emilia.signatures }).length, eligible.length);
+    }
+  });
+  it('does not let a provider-local ID or malformed external ID resolve ambiguity', () => {
+    assert.deepEqual(artistSignatureCandidates({ ...emilia, artist: { id: 'local-id', musicbrainz_id: 'unknown', wikidata_id: '' } }), []);
   });
 });
 

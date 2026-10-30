@@ -13,7 +13,7 @@ const TTL = 7 * 24 * 60 * 60 * 1000;
 const MISS_TTL = 5 * 60 * 1000;
 
 /** Public name only, never server credentials, artist IDs or Navidrome writes. */
-export async function getArtistSignature(name: string, api = SIGNATURE_API): Promise<LoadedArtistSignature | null> {
+export async function getArtistSignature(name: string, api = SIGNATURE_API, tintColor = '#ffffff'): Promise<LoadedArtistSignature | null> {
   const source = publicHttpsUrl(api);
   if (!source) return null;
   const normalized = name.trim().normalize('NFC');
@@ -32,7 +32,7 @@ export async function getArtistSignature(name: string, api = SIGNATURE_API): Pro
       return true;
     }).slice(0, 5)) {
       try {
-        const signature = await loadSignatureImage(candidate, offline);
+        const signature = await loadSignatureImage(candidate, offline, tintColor);
         if (signature) return signature;
       } catch { imageFailed = true; }
     }
