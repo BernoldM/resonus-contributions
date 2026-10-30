@@ -47,6 +47,7 @@
       "./plugins/withoutFontWeightAdjustment",
       "./plugins/withTrimmedPermissions",
       "./plugins/withAppLocales",
+      "./plugins/withoutUserScriptSandboxing",
       "./plugins/withResonusWidget",
       "expo-router",
       [
