@@ -23,16 +23,31 @@ function assetUrl(value: unknown, api: string): string | undefined {
   } catch { return; }
 }
 
+function signatureAssetUrl(signature: Record<string, unknown>, api: string): string | undefined {
+  return [record(signature.asset).url, signature.asset, signature.url, signature.original_url, record(signature.source).original_url]
+    .map((value) => assetUrl(value, api)).find(Boolean);
+}
+
 export function artistSignatureCandidates(value: unknown, api = SIGNATURE_API): ArtistSignature[] {
   const root = record(value);
   // Ambiguous matches must never substitute somebody else's autograph.
   if (!Array.isArray(root.signatures)) return [];
+  const entries = root.signatures.slice(0, 100).map(record);
+  const artist = record(root.artist);
+  const linkedArtist = (typeof artist.musicbrainz_id === 'string' && /^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(artist.musicbrainz_id))
+    || (typeof artist.wikidata_id === 'string' && /^Q[1-9]\d*$/.test(artist.wikidata_id));
+  // A short name can return several different people's autographs (Emilia).
+  // License/size ranking cannot resolve multiple unverified assets without a
+  // linked artist identity. Keep verified entries, otherwise use logo/name.
+  const unverifiedAssets = new Set(entries.filter((entry) => entry.verification === 'unverified')
+    .map((entry) => signatureAssetUrl(entry, api))
+    .filter((url): url is string => !!url).map((url) => new URL(url).origin + new URL(url).pathname));
+  const ambiguous = !linkedArtist && unverifiedAssets.size > 1;
   const candidates: { signature: ArtistSignature; score: number; area: number }[] = [];
-  for (const item of root.signatures.slice(0, 100)) {
-    const signature = record(item);
+  for (const signature of entries) {
+    if (ambiguous && !['verified', 'artist_verified'].includes(String(signature.verification))) continue;
     const asset = record(signature.asset);
-    const imageUrl = [asset.url, signature.asset, signature.url, signature.original_url, record(signature.source).original_url]
-      .map((value) => assetUrl(value, api)).find(Boolean);
+    const imageUrl = signatureAssetUrl(signature, api);
     if (!imageUrl) continue;
     // A license does not establish identity. Full-page JPEG scans cannot be
     // transparent title masks, even when the provider labels them signatures.

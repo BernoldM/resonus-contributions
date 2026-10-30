@@ -15,8 +15,8 @@ export function ArtistSignature({ name, width }: { name: string; width: number }
   const enabled = useSettings((s) => s.artistSignaturesEnabled);
   const api = useSettings((s) => s.artistSignaturesApi);
   const { data } = useQuery({
-    queryKey: ['artist-signature-v4', api, name],
-    queryFn: () => getArtistSignature(name, api),
+    queryKey: ['artist-signature-v5', api, name, colors.text],
+    queryFn: () => getArtistSignature(name, api, colors.text),
     enabled: enabled && !!publicHttpsUrl(api),
     staleTime: 5 * 60 * 1000,
     retry: 1,
@@ -44,7 +44,6 @@ export function ArtistSignature({ name, width }: { name: string; width: number }
           style={{ position: 'absolute', left: (width - imageWidth) / 2, bottom: spacing.md, width: imageWidth, height: 88, opacity: shown ? 1 : 0 }}
           contentFit="contain"
           contentPosition="bottom"
-          tintColor={colors.text}
           recyclingKey={`${api}\n${name}\n${signature.imageUrl}`}
           onDisplay={() => setDisplayed(signature.image)}
           onError={() => setFailed(signature.image)}
