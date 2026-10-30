@@ -21,6 +21,8 @@
   <a href="https://github.com/juananzzz/resonus/releases"><img src="https://img.shields.io/github/downloads/juananzzz/resonus/total?logo=github&logoColor=white&label=downloads" alt="GitHub downloads" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0" /></a>
   <a href="https://github.com/juananzzz/resonus/stargazers"><img src="https://img.shields.io/github/stars/juananzzz/resonus?style=flat" alt="Stars" /></a>
+  <a href="https://discord.gg/pecE8MTPVr"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord" /></a>
+  <a href="https://ko-fi.com/juananzzz"><img src="https://img.shields.io/badge/Ko--fi-FF5E5B?logo=kofi&logoColor=white" alt="Support on Ko-fi" /></a>
 </p>
 
 ---
@@ -28,11 +30,7 @@
 <p align="center">
   <a href="https://github.com/juananzzz/resonus/releases/latest"><img src="./assets/images/badges/download.svg" height="28" alt="Download APK" /></a>
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/juananzzz/resonus"><img src="./assets/images/obtainium.svg" height="28" alt="Get via Obtainium" /></a>
-  <a href="#ios-experimental"><img src="./assets/images/badges/ios.svg" height="28" alt="iOS (experimental)" /></a>
-  <a href="https://altdirect.app/?url=https://raw.githubusercontent.com/juananzzz/resonus/main/Source.json"><img src="./assets/images/badges/altsource.svg" height="28" alt="Add as an AltSource" /></a>
-  <br />
-  <a href="https://discord.gg/pecE8MTPVr"><img src="./assets/images/badges/discord.svg" height="28" alt="Discord" /></a>
-  <a href="https://ko-fi.com/juananzzz"><img src="./assets/images/badges/kofi.svg" height="28" alt="Support on Ko-fi" /></a>
+  <a href="https://altdirect.app/?url=https://raw.githubusercontent.com/juananzzz/resonus/main/Source.json"><img src="./assets/images/badges/altsource.svg" height="28" alt="iOS via AltStore" /></a>
 </p>
 
 ## Screenshots
