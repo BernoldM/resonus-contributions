@@ -38,7 +38,6 @@
 | Home | Player | Album | Library |
 | :---: | :---: | :---: | :---: |
 | <img src="./assets/screenshots/dark-home.jpg" width="200" alt="Home, dark" /> | <img src="./assets/screenshots/dark-player.jpg" width="200" alt="Player, dark" /> | <img src="./assets/screenshots/dark-album.jpg" width="200" alt="Album, dark" /> | <img src="./assets/screenshots/dark-library.jpg" width="200" alt="Library, dark" /> |
-| <img src="./assets/screenshots/light-home.jpg" width="200" alt="Home, light" /> | <img src="./assets/screenshots/light-player.jpg" width="200" alt="Player, light" /> | <img src="./assets/screenshots/light-album.jpg" width="200" alt="Album, light" /> | <img src="./assets/screenshots/light-library.jpg" width="200" alt="Library, light" /> |
 
 | Artist | Lyrics | Queue | Servers |
 | :---: | :---: | :---: | :---: |
