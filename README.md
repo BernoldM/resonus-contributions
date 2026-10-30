@@ -107,6 +107,8 @@ More languages are welcome via pull request. See
 [TRANSLATING.md](./TRANSLATING.md) for how to add one, plus context for the
 trickier strings.
 
+<a href="./TRANSLATING.md"><img src="https://raw.githubusercontent.com/juananzzz/resonus/i18n-status/translations.svg" alt="Translation progress per language" /></a>
+
 ## Community
 
 Join the [Discord server](https://discord.gg/pecE8MTPVr) to share feedback,
