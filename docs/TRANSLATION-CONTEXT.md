@@ -1031,10 +1031,10 @@ you are actually typing into, which is easier than reading it here.
 | `Elements` | Which player elements to show |
 | `Favorite` | One of the choices for the button next to play on the mini player: the heart. Not a verb |
 | `Fit cover art` | Show the whole cover even if it is not square, instead of cropping it to fill |
-| `For static covers. Choose animated artwork separately below.` | The line under “Full-bleed Now Playing artwork”, explaining it |
-| `Full bleed` | One of the values of “Animated artwork” |
-| `Full-bleed album artwork` |  |
-| `Full-bleed Now Playing artwork` |  |
+| `For static covers. Choose animated artwork separately below.` | Description of the static full-bleed switch; animated artwork has a separate three-way selector. |
+| `Full bleed` | Third animated-artwork layout: fitted edge-to-edge artwork, independent of static full bleed. |
+| `Full-bleed album artwork` | Album detail layout: cover spans the screen width and fades into the background; not an audio effect. |
+| `Full-bleed Now Playing artwork` | Now Playing layout: the complete artwork sits below the header and fades into colours from its edges. |
 | `Go to album` | Leave this sheet and open the album the song is on |
 | `In the cover` | A value of `Animated artwork`: the animated cover plays inside the square where the cover is |
 | `Keep paused when skipping` |  |
