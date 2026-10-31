@@ -138,7 +138,8 @@
     // ── Actions & verbs (easy to translate as the wrong part of speech) ──────
     "Rate": "Verb: give it stars. Used for a song and for an artist. Not \"bitrate\"",
     "Restore": "Restore settings to their defaults",
-    "Reorder": "Enter drag-to-reorder mode",
+    "Reorder": "Settings: the button that puts a list in the order you dragged it; also the grip icon on a row whose hold moves it",
+    "Save order": "Button on a playlist's selection bar, lit once a row has been dragged to another place: it writes the new order of the songs back to the server",
     "Turn off": "Turn off the sleep timer",
     "Start mix": "Start an auto-generated radio mix from this song",
     "More options": "Read out by the screen reader for the three-dot button, which is ⋮ on a song row and in the player and ⋯ in a screen's header",
@@ -223,7 +224,7 @@
     "Playlist deleted": "Toast, with an undo button",
     "Playlist updated": "Toast after saving a change",
     "Save": "The confirm button of an edit sheet. A verb",
-    "Done": "The button that leaves drag-to-reorder, or accepts a fine-tuned number",
+    "Done": "The button that accepts a fine-tuned number",
     "Remove cover": "Screen reader label for the small x on a chosen picture",
     "Visible to other users on the server": "The line under `Public playlist`",
     "Your password is needed to upload images and will be stored securely.": "The line explaining why the password is asked for again",
