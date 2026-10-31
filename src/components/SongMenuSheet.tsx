@@ -23,6 +23,7 @@ import { useScreenSize } from '@/hooks/useScreenSize';
 import { usePodcastFavoriteIds } from '@/lib/podcastFavorites';
 import {
   addToPlaylist,
+  canGoIntoPlaylist,
   coverArtUrl,
   songCoverUrl,
   createPlaylist,
@@ -550,10 +551,12 @@ export function SongMenuSheet() {
                   scrollEventThrottle={16}
                   onScroll={(e) => setAtTop(e.nativeEvent.contentOffset.y <= 0)}
                 >
-                  {/* A podcast episode belongs to no playlist: its id means
-                      nothing to the server, so the playlist actions are not
-                      offered at all — an episode has no server behind it. */}
-                  {!song.podcastChannelId ? (
+                  {/* Only a track a playlist can name gets the playlist
+                      actions: a podcast episode's id means nothing to the
+                      server, and so does a radio station's: its id belongs to
+                      the station list (`canGoIntoPlaylist` says it once, and
+                      the heart's hold reads the same rule). */}
+                  {canGoIntoPlaylist(song) ? (
                     <>
                       <Action
                         icon="add-circle-outline"

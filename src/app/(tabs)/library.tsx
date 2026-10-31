@@ -912,6 +912,10 @@ function AllTab({ query, onNew }: { query: string; onNew?: () => void }) {
   const refresh = () => {
     lists.refetch();
     starred.refetch();
+    // The hearted shows and episodes are rows here too, and without these the
+    // mixed list kept them frozen for the whole session.
+    podcastsQ.refetch();
+    episodesQ.refetch();
   };
   if (loading) return <Loader />;
   if (lists.isError && starred.isError) {
@@ -932,7 +936,7 @@ function AllTab({ query, onNew }: { query: string; onNew?: () => void }) {
       keyExtractor={(item) => `${item.kind}:${item.id}`}
       refreshControl={
         <RefreshControl
-          refreshing={lists.isFetching || starred.isFetching}
+          refreshing={lists.isFetching || starred.isFetching || podcastsQ.isFetching || episodesQ.isFetching}
           onRefresh={refresh}
           tintColor={colors.accent}
         />

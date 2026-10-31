@@ -1780,13 +1780,15 @@ export async function deleteRadioStation(
  * small circle, anything card-sized up to the player's full width, and the
  * viewer, which is the picture on its own. `thumb` is also what the palette
  * asks for, so the tint of a list comes from the file the list already has.
+ * The default is `card`, one of the three: a caller that omits `size` must
+ * not invent a fourth one, it would split the cache.
  */
 export const COVER = { thumb: 200, card: 600, full: 1200 } as const;
 
 export function coverArtUrl(
   auth: SubsonicAuth,
   id: string | undefined,
-  size = 300,
+  size: number = COVER.card,
 ): string | undefined {
   if (!id) return undefined;
   return buildUrl(auth, 'getCoverArt.view', { id, size });
