@@ -16,10 +16,13 @@ Releases before 0.2.1 are only listed on the
 
 ### Changed
 
+- In a playlist, hold a row while songs are selected to move it, and press Save order to keep the new order. This replaces the Reorder screen (#279).
+- Holding a song to start a selection no longer marks that song (#279).
 - Add to a playlist marks the playlists a song is already in, and a tap adds or removes it without closing the sheet.
 
 ### Fixed
 
+- A playlist's page no longer freezes while songs are selected, and leaving the selection no longer jumps to the top (#279).
 - Casting: more cases where the queue stayed on a song after it ended are handled (#285).
 - The progress bar looks the same on every Android phone.
 - Next and previous from other apps and devices, like Garmin watches, should now work (#307).
