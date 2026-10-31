@@ -10,10 +10,13 @@ import { fetch } from 'expo/fetch';
 
 import { assertCanRequest, isManualOffline, OfflineError } from './netGate';
 import { profileScopeId } from '@/store/auth';
-import { usePlayerStore } from '@/store/player';
+import { useDownloads } from '@/store/downloads';
+import { episodeMarkedByHand, usePlayerStore } from '@/store/player';
+import { useSettings } from '@/store/settings';
 
+import { episodePlayed } from '@/lib/episodeResume';
 import { hashKey } from '@/lib/localLibrary';
-import { invalidatePodcastFavorites, invalidatePodcastLists } from '@/lib/query';
+import { invalidatePodcastFavorites, invalidatePodcastLists, queryClient } from '@/lib/query';
 import * as Db from '@/lib/podcastDb';
 import type { RecentEpisode } from '@/lib/podcastDb';
 import { parseFeed, sortEpisodes, type ParsedItem } from '@/lib/podcastFeed';
@@ -62,6 +65,8 @@ export interface PodcastSearchResult {
 }
 
 const TIMEOUT_MS = 20_000;
+const AUTO_DOWNLOAD_EPISODES = 3;
+const AUTO_DOWNLOAD_READ_MS = 1000 * 60 * 60 * 6;
 
 function scope(): string {
   return hashKey(profileScopeId());
@@ -290,6 +295,15 @@ export async function refreshChannel(input: string): Promise<PodcastChannel> {
 
   await Db.saveChannel(s, channel);
   await Db.replaceEpisodes(s, id, episodes);
+  if (landed > 0 && had.size > 0 && useSettings.getState().podcastAutoDownload) {
+    const newest = episodes.filter((e) => e.firstSeenAt === landedAt && e.url).slice(0, AUTO_DOWNLOAD_EPISODES);
+    if ((await favoriteIds()).has(id)) {
+      void useDownloads.getState().autoDownloadEpisodes(
+        id,
+        newest.map((e) => ({ id: e.id, url: e.url!, channelId: id })),
+      );
+    }
+  }
   // A show that was never on the device is in the lists now, and one that was
   // may have a new episode count or a new picture: the browser, Home's shelf
   // and the favorite lists ask again. The show's own screen is the query that
@@ -404,6 +418,40 @@ export async function refreshAll(
     }
   }
   return { failed, total: feeds.length, stopped: false };
+}
+
+/** Re-reads favorite shows gone stale, which is how auto-download sees new
+ *  episodes: nothing else reads a feed until its show is opened. */
+export async function refreshFavoritesForAutoDownload(): Promise<void> {
+  if (!useSettings.getState().podcastAutoDownload || isManualOffline()) return;
+  for (const channel of await listFavoriteChannels()) {
+    if (Date.now() - (channel.refreshedAt ?? 0) < AUTO_DOWNLOAD_READ_MS) continue;
+    await refreshChannel(channel.feedUrl).catch(() => {});
+  }
+}
+
+/** The ids of a show's episodes that count as played. */
+export async function playedEpisodeIds(channelId: string): Promise<Set<string>> {
+  const rows = await Db.listEpisodeProgress(scope(), channelId);
+  return new Set(rows.filter((r) => episodePlayed(r.positionSec, r.durationSec)).map((r) => r.id));
+}
+
+/** Played is progress at the end, so unplayed is no progress: it starts over. */
+export async function setEpisodePlayed(song: Song, played: boolean): Promise<void> {
+  if (!song.podcastChannelId) return;
+  episodeMarkedByHand(song.id, played);
+  if (played) {
+    const end = song.duration || 1;
+    await Db.saveEpisodeProgress(scope(), {
+      id: song.id,
+      channelId: song.podcastChannelId,
+      positionSec: end,
+      durationSec: end,
+    });
+  } else {
+    await Db.clearEpisodeProgress(scope(), song.id);
+  }
+  queryClient.invalidateQueries({ queryKey: ['podcastPlayed'] });
 }
 
 const SUFFIXES: Record<string, string> = {

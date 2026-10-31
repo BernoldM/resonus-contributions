@@ -56,6 +56,13 @@ CREATE TABLE IF NOT EXISTS podcast_downloads (
 );
 CREATE INDEX IF NOT EXISTS podcast_downloads_channel
   ON podcast_downloads(channel_id, downloaded_at DESC);
+CREATE TABLE IF NOT EXISTS podcast_progress (
+  episode_id TEXT PRIMARY KEY NOT NULL,
+  channel_id TEXT NOT NULL,
+  position_sec REAL NOT NULL,
+  duration_sec REAL NOT NULL,
+  updated_at INTEGER NOT NULL
+);
 `;
 
 const ROOT = `${FileSystem.documentDirectory}podcasts/`;
@@ -380,6 +387,51 @@ export async function listFavoriteEpisodes(scope: string, limit = 100): Promise<
   }));
 }
 
+/** Where an episode was left. Its own table: a feed read replaces the episodes. */
+export async function saveEpisodeProgress(
+  scope: string,
+  episode: { id: string; channelId: string; positionSec: number; durationSec: number },
+): Promise<void> {
+  const db = await podcastDb(scope);
+  await serialized(() =>
+    db.runAsync(
+      `INSERT OR REPLACE INTO podcast_progress
+         (episode_id, channel_id, position_sec, duration_sec, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [episode.id, episode.channelId, episode.positionSec, episode.durationSec, Date.now()],
+    ),
+  );
+}
+
+export async function clearEpisodeProgress(scope: string, id: string): Promise<void> {
+  const db = await podcastDb(scope);
+  await serialized(() => db.runAsync('DELETE FROM podcast_progress WHERE episode_id = ?', [id]));
+}
+
+export async function listEpisodeProgress(
+  scope: string,
+  channelId: string,
+): Promise<{ id: string; positionSec: number; durationSec: number }[]> {
+  const db = await podcastDb(scope);
+  const rows = await db.getAllAsync<{ episode_id: string; position_sec: number; duration_sec: number }>(
+    'SELECT episode_id, position_sec, duration_sec FROM podcast_progress WHERE channel_id = ?',
+    [channelId],
+  );
+  return rows.map((r) => ({ id: r.episode_id, positionSec: r.position_sec, durationSec: r.duration_sec }));
+}
+
+export async function getEpisodeProgress(
+  scope: string,
+  id: string,
+): Promise<{ positionSec: number; durationSec: number } | undefined> {
+  const db = await podcastDb(scope);
+  const row = await db.getFirstAsync<{ position_sec: number; duration_sec: number }>(
+    'SELECT position_sec, duration_sec FROM podcast_progress WHERE episode_id = ?',
+    [id],
+  );
+  return row ? { positionSec: row.position_sec, durationSec: row.duration_sec } : undefined;
+}
+
 /**
  * Takes a show off the device: its row, its episodes, its hearts, its download
  * records and its picture. The downloaded files are unlinked by the caller
@@ -394,6 +446,7 @@ export async function removeChannel(scope: string, id: string): Promise<void> {
       await db.runAsync('DELETE FROM podcast_episodes WHERE channel_id = ?', [id]);
       await db.runAsync('DELETE FROM podcast_favorites WHERE channel_id = ?', [id]);
       await db.runAsync('DELETE FROM podcast_downloads WHERE channel_id = ?', [id]);
+      await db.runAsync('DELETE FROM podcast_progress WHERE channel_id = ?', [id]);
     }),
   );
   if (channel?.imageUrl) {

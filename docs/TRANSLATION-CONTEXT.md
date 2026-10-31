@@ -5,7 +5,7 @@
      `src/i18n/context.jsonc`, and where a string shows up is read off the
      code, so both are fixed at the source and this page follows. -->
 
-Every string the app can show, under the screen it shows up on. 832 of them.
+Every string the app can show, under the screen it shows up on. 834 of them.
 The second column is only filled in where the English is ambiguous on its own
 If one tripped you up and the column is empty, that is worth telling us, and
 the answer goes into `src/i18n/context.jsonc` where the next translator of the
@@ -72,6 +72,7 @@ you are actually typing into, which is easier than reading it here.
 | `Download removed` | Toast: the file was deleted, the song stays in the library |
 | `Downloading Resonus {version}` |  |
 | `Duration` | Label of a field in the song information sheet: how long the song is |
+| `Episode information` |  |
 | `Explicit` | A value of `Content`: the recording carries a parental advisory (strong language). Also read out for the E badge next to a title |
 | `Export “{name}”?` | Confirms getting the files of an album or playlist out of the app |
 | `Fixes` | Heading in the update prompt over the bugs a release fixes |
@@ -83,6 +84,8 @@ you are actually typing into, which is easier than reading it here.
 | `Go to Podcast` | Song menu: open the show an episode belongs to. Not the act of broadcasting |
 | `Home` | The first tab, and a folder in the car |
 | `Library` | The settings section, and a folder in the car |
+| `Mark as played` |  |
+| `Mark as unplayed` |  |
 | `Mix of “{name}”` | What the player calls the queue once it has grown past its album into songs the app picked itself. `{name}` is the song it was grown from |
 | `Mix started` | The toast that says the app is now picking the songs |
 | `Moods` | Mood tags the server has on the song: mellow, energetic… |
@@ -505,6 +508,7 @@ you are actually typing into, which is easier than reading it here.
 | `{n} removed from playlist` | `{n}` is a plain number, with no word for songs attached: English reads "3 removed from playlist". Put in whatever your language needs around it |
 | `Add an optional description` | Placeholder in the empty description box |
 | `Add songs from the ⋯ menu of any song.` | The line under an empty playlist, saying how to fill it |
+| `Added to “{name}”` | Toast. `{name}` is the playlist's name |
 | `Artwork upload is disabled on the server` | The server can do it but has it turned off |
 | `Auto-download` | Keep this playlist downloaded by itself as songs are added to it |
 | `Auto-download off` | The toast that says it was turned off |
@@ -518,7 +522,6 @@ you are actually typing into, which is easier than reading it here.
 | `Delete “{name}”?` | Dialog title. `{name}` is the playlist or station |
 | `Delete playlist` | Menu action, in red |
 | `Description` | The playlist's own description: what whoever made it wrote about it |
-| `Done` | The button that leaves drag-to-reorder, or accepts a fine-tuned number |
 | `Edit playlist` | Menu action, and the title of the sheet it opens |
 | `Name` | The Name field when editing a playlist or a station |
 | `Password` | The password field, on the login screen and wherever the server asks again |
@@ -561,6 +564,7 @@ you are actually typing into, which is easier than reading it here.
 | `Couldn't read this feed` | Filed under a show whose feed would not load, so the reason is still there offline. One show, not the whole list |
 | `Feed URL` | The field in the add-a-show sheet: the address of the show's feed, pasted in |
 | `Find a podcast` | The placeholder in the search box on the shows you keep: searches the iTunes directory, which answers with a show's feed address |
+| `Find one, or add it with the address of its feed.` |  |
 | `No episodes yet` | Where a show's episode count would be on the list of shows: nothing published yet |
 | `No podcasts` | Nothing kept on this phone yet: no show subscribed |
 | `Podcasts` | Shows kept on this phone, played from the address the publisher gives. Not something the music server stores |
@@ -729,6 +733,7 @@ you are actually typing into, which is easier than reading it here.
 | `Delete all downloads` |  |
 | `Delete all downloads?` |  |
 | `Download codec` |  |
+| `Download new episodes of favorite podcasts` |  |
 | `Download over Wi-Fi only` |  |
 | `Download quality` |  |
 | `Downloading` | Section header over the download settings. A heading, not something happening right now |
@@ -752,6 +757,7 @@ you are actually typing into, which is easier than reading it here.
 | `Song cache` | Copies of streamed songs the app keeps by itself and deletes to make room. Not the same as Downloads, which the person chose |
 | `Songs you stream are kept on this phone and play from it next time, with or without a connection. The next song in the queue is fetched ahead, so it is not streamed at all. When the cache is full, the songs played longest ago make room.` |  |
 | `Storage used` | Section header over the bar showing what is taking up room on the phone |
+| `The latest 3 of each new batch, over Wi-Fi only.` | The line under “Download new episodes of favorite podcasts”, explaining it |
 | `Transcode lossless files only` |  |
 | `Your server must support it.` |  |
 
@@ -968,7 +974,7 @@ you are actually typing into, which is easier than reading it here.
 | `By album` | Volume normalization (ReplayGain) mode: even out loudness album by album |
 | `By track` | Volume normalization (ReplayGain) mode: even out loudness track by track |
 | `Crossfade` | One song fading into the next |
-| `Done` | The button that leaves drag-to-reorder, or accepts a fine-tuned number |
+| `Done` | The button that accepts a fine-tuned number |
 | `Equalizer` |  |
 | `Keep screen on` |  |
 | `Mobile data` | Group header under `Streaming`: the settings that apply on mobile data, as opposed to Wi-Fi |
@@ -1122,7 +1128,7 @@ you are actually typing into, which is easier than reading it here.
 
 | String | What it is |
 | --- | --- |
-| `Done` | The button that leaves drag-to-reorder, or accepts a fine-tuned number |
+| `Done` | The button that accepts a fine-tuned number |
 | `How far into a song it counts as played. Whichever of the two comes first.` | At the top of the `Scrobbling` screen, over the two rows below it |
 | `Off` | A setting value meaning disabled (crossfade, normalization…) |
 | `Part of the song` | How much of a song must have played before it counts, as a percentage. One of the two scrobble rules, and it can be `Off` |
@@ -1182,13 +1188,12 @@ you are actually typing into, which is easier than reading it here.
 | String | What it is |
 | --- | --- |
 | `“{name}” will no longer be available offline.` | The line under that title. `{name}` is the album, artist or playlist |
-| `{n} added to “{name}”` | Toast when several songs went in at once. `{n}` is a count of songs |
 | `{n} columns` | The other options in that menu: cards, this many across. `{n}` is 2, 3 or 4, so it is always plural |
 | `{n} episodes couldn't be downloaded` | Toast after a show's download: how many the publisher would not give |
 | `{n} episodes deleted` | Toast after clearing a show's downloads: how many files went |
 | `{n} episodes downloaded` | Toast after a show's download: how many episodes landed on the phone |
 | `{n} of {m} songs exported` | Toast when only some of them made it |
-| `{n} of {songs} are already in “{name}”.` | The same warning when adding several at once and only some of them are already there. `{n}` is how many of them are, and `{songs}` already reads as a count ("12 songs"), so the sentence is like "3 of 12 songs are already in “Rock”." |
+| `{n} of {songs}` | Beside a playlist in the add to playlist sheet, when it holds only some of the songs being added. `{songs}` already reads as a count, so it is like "3 of 12 songs" |
 | `{n} removed from favorites` | Toast. `{n}` is a count of songs |
 | `{n} selected` | How many songs are ticked right now |
 | `{n} songs couldn't be downloaded` | Toast: some failed, the rest are there |
@@ -1199,19 +1204,14 @@ you are actually typing into, which is easier than reading it here.
 | `{songs} need about {size}, but only {free} is free. The download may stop partway.` | The same line when the phone is nearly full |
 | `{songs} will be saved to this device (about {size}).` | The same line when the size is known. `{size}` is like "340 MB" |
 | `{songs} will be saved to this device.` | The line under that title. `{songs}` is already worded and inflected, "12 songs" |
-| `Add anyway` | The confirm button of that warning: put it in a second time |
-| `Add only the new ones` | The other button of that warning, when some are already in the playlist and some are not: leave the ones that are and add the rest |
 | `Add to a playlist` | Menu action: put this song, album or selection into a playlist |
 | `Add to favorites` | Menu action and screen reader label for the heart. A verb |
 | `Add to queue` | Action: put this song at the end of the queue |
-| `Added to “{name}”` | Toast. `{name}` is the playlist's name |
 | `Added to favorites` | Toast |
 | `Added to queue` | The toast that says it worked |
 | `Album` | In search results, the little word under a result saying what kind of thing it is |
 | `Albums` | A heading over a list of them, never a count |
-| `All {songs} are already in “{name}”.` | The same warning when every one of the several being added is already there. `{songs}` already reads as a count ("12 songs") |
 | `Alphabetical` | Sort option: the order of a list |
-| `Already added` | Title of the dialog that warns the song is in that playlist already |
 | `Ascending` | Sort option: the order of a list |
 | `Back` | Screen reader label for the back arrow. A direction, not a verb |
 | `Cancel` | The button that closes a dialog without doing anything, and the one beside a search box |
@@ -1260,6 +1260,7 @@ you are actually typing into, which is easier than reading it here.
 | `Pause` | Read out by the screen reader for the pause button. A verb |
 | `Play` | Read out by the screen reader for the play button. A verb |
 | `Play next` | Action: put this song right after the one playing, without clearing the rest |
+| `Played` |  |
 | `Playing next` | The toast that says `Play next` worked. Not the same string, and not a heading |
 | `Playlist name` | The name field when making or renaming a playlist |
 | `Playlists` | A section on Home and in the library, and a folder in the car |
@@ -1275,9 +1276,10 @@ you are actually typing into, which is easier than reading it here.
 | `Remove from favorites` | The same button when it is already a favourite, and the menu entry that takes a whole selection out |
 | `Remove from this device` | A show's ⋯ menu and the dialog it opens: takes the show, its episodes and its downloads off this phone. Nothing on any server |
 | `Removed from favorites` | Toast |
-| `Reorder` | Enter drag-to-reorder mode |
+| `Reorder` | Verb. In a playlist's menu, it opens the mode to drag songs to another place; also the grip icon on a row whose hold moves it |
 | `Retry` | The button on an error message: try again. A verb |
 | `Save` | The confirm button of an edit sheet. A verb |
+| `Save order` | Button on a playlist's selection bar, lit once a row has been dragged to another place: it writes the new order of the songs back to the server |
 | `Search` | The search tab, and the action of searching |
 | `Select all` | Tick every song in the list at once |
 | `Server default` | Codec option meaning "let the server decide" what to transcode to |
@@ -1295,7 +1297,6 @@ you are actually typing into, which is easier than reading it here.
 | `Stop` | Stop a download that is running. Not stop playback |
 | `Stop download?` | Dialog title: stop a download that is running |
 | `This song can't be cast` | Toast: the speaker or TV will not take this file |
-| `This song is already in “{name}”.` | The line under that title. `{name}` is the playlist |
 | `Undo` | The button in a toast that takes back what just happened. It is there for a few seconds |
 | `Unexpected server response` |  |
 | `Unknown album` | Fallback when the file and the server have no album |

@@ -1037,6 +1037,8 @@ interface SettingsState extends Omit<AutoSetters, CustomSetter> {
    * offline library only shows playable content.
    */
   hideUnavailableOffline: boolean;
+  /** New episodes of favorite shows download by themselves, on Wi-Fi. */
+  podcastAutoDownload: boolean;
   /** Volume normalization (ReplayGain): off, per track, or per album. */
   replayGain: ReplayGainMode;
   /**
@@ -1414,6 +1416,7 @@ const DEFAULTS = {
   preferPreciseTiming: false,
   autoOfflineSwitch: true,
   hideUnavailableOffline: false,
+  podcastAutoDownload: false,
   replayGain: 'off' as ReplayGainMode,
   replayGainPreampDb: 0,
   keepScreenAwake: false,

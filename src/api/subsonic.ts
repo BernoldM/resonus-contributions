@@ -339,6 +339,8 @@ export interface Playlist {
   public?: boolean;
   /** Playlist owner ("System" for Ampache stock smartlists). */
   owner?: string;
+  /** OpenSubsonic: this user can't change the tracks (smart, synced, someone else's). */
+  readonly?: boolean;
   /** Creation date (ISO); sent by Navidrome/Subsonic and the local profile. */
   created?: string;
   /** Last modification (ISO). */

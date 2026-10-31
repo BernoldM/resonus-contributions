@@ -34,6 +34,7 @@ import { openPodcastMenu } from '@/components/PodcastMenuSheet';
 import { episodesLabel, useT } from '@/i18n';
 import { formatTotalDuration } from '@/lib/format';
 import { usePodcastFavoriteIds } from '@/lib/podcastFavorites';
+import { usePodcastPlayedIds } from '@/lib/podcastPlayed';
 import { invalidatePodcastCaches } from '@/lib/query';
 import { useSettings } from '@/store/settings';
 import { currentSong, usePlayerStore } from '@/store/player';
@@ -89,6 +90,7 @@ export default function PodcastScreen() {
 
   // The hearts, so the favorite pill can show whether this show is hearted.
   const favSet = usePodcastFavoriteIds();
+  const playedIds = usePodcastPlayedIds(data.data?.channel.id);
 
   // The show's download, read the way an album's is: the same `files` map the
   // player uses, keyed by episode id, so "done" means every episode is on disk.
@@ -131,18 +133,19 @@ export default function PodcastScreen() {
     // screen already holds, so the row never has to ask per row, and its
     // identity is stable across repaints (the row's memo keys on it).
     const since = channel.newSinceAt;
-    const info = new Map<string, { description?: string; publishedAt?: number; fresh: boolean }>(
+    const info = new Map<string, { description?: string; publishedAt?: number; fresh: boolean; played: boolean }>(
       list.map((e) => [
         e.id,
         {
           description: e.description,
           publishedAt: e.publishedAt,
           fresh: since !== undefined && (e.firstSeenAt ?? 0) >= since,
+          played: playedIds.has(e.id),
         },
       ]),
     );
     return { songs: shown, meta: line, episodeInfo: info };
-  }, [data.data, hideUnavailable, lang]);
+  }, [data.data, hideUnavailable, playedIds, lang]);
 
   // Stable between progress ticks (only changes with status): if its identity
   // changed on every % update, the Pressable would lose its touch and you'd

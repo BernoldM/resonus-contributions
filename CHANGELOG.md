@@ -9,10 +9,25 @@ Releases before 0.2.1 are only listed on the
 
 ## [Unreleased]
 
+### Added
+
+- Podcasts: mark episodes as played or unplayed.
+- Podcasts: new episodes of favorite shows can download by themselves over Wi-Fi.
+
+### Changed
+
+- To reorder a playlist, choose Reorder in its ⋯ menu or hold a song, drag the rows, and press Save order (#279).
+- Holding a song to start a selection no longer marks that song (#279).
+- Add to a playlist marks the playlists a song is already in, and a tap adds or removes it without closing the sheet.
+
 ### Fixed
 
+- A playlist's page no longer freezes while songs are selected, and leaving the selection no longer jumps to the top (#279).
+- Casting: more cases where the queue stayed on a song after it ended are handled (#285).
 - The progress bar looks the same on every Android phone.
 - Next and previous from other apps and devices, like Garmin watches, should now work (#307).
+- Podcast episodes pick up where you left them, even after playing music or restarting the app.
+- The podcasts screen says how to find a show when it is empty, and the feed address field is ready to type in.
 
 ## [0.8.5] - 2026-10-30
 
