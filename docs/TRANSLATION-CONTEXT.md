@@ -1275,7 +1275,7 @@ you are actually typing into, which is easier than reading it here.
 | `Remove from favorites` | The same button when it is already a favourite, and the menu entry that takes a whole selection out |
 | `Remove from this device` | A show's ⋯ menu and the dialog it opens: takes the show, its episodes and its downloads off this phone. Nothing on any server |
 | `Removed from favorites` | Toast |
-| `Reorder` | Settings: the button that puts a list in the order you dragged it; also the grip icon on a row whose hold moves it |
+| `Reorder` | Verb. In a playlist's menu, it opens the mode to drag songs to another place; also the grip icon on a row whose hold moves it |
 | `Retry` | The button on an error message: try again. A verb |
 | `Save` | The confirm button of an edit sheet. A verb |
 | `Save order` | Button on a playlist's selection bar, lit once a row has been dragged to another place: it writes the new order of the songs back to the server |

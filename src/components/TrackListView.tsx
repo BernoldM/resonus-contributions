@@ -6,7 +6,7 @@
 import Icon from '@/components/Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -245,9 +245,14 @@ interface Props {
      *  moving a row in an A-Z or Recently-added view would write that view back
      *  as a sort the hand never asked for and cannot undo. Outside a selection a
      *  vertical drag is the list's scroll, and the row's own sideways swipe is a
-     *  pan that would fight the list's (#279).
+     *  pan that would fight the list's (#279). `openRef` is the way in from the
+     *  screen's ⋯ menu: it opens the selection, with nothing marked.
      */
-    reorder?: { onSave: (songIds: string[]) => void; serverOrder: boolean };
+    reorder?: {
+      onSave: (songIds: string[]) => void;
+      serverOrder: boolean;
+      openRef?: MutableRefObject<() => void>;
+    };
   };
   /** `opts` goes straight to `playQueue`: the shuffle button asks for the list
    *  dealt, which the screen owning the songs is the one who can request. */
@@ -504,6 +509,10 @@ export function TrackListView({
   // null = normal mode; a Set (even empty) = selecting.
   const [selectedIds, setSelectedIds] = useState<Set<string> | null>(null);
   const selecting = selectedIds !== null;
+  const reorderOpenRef = selection?.reorder?.openRef;
+  useEffect(() => {
+    if (reorderOpenRef) reorderOpenRef.current = () => setSelectedIds(new Set());
+  });
   // Row that just entered selection via long-press. On release, the `onPress` of
   // that same gesture arrives with `selecting` already active and would undo the
   // selection; we discard it once. Reset in `onPressIn` (start of each press),

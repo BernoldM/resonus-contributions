@@ -16,7 +16,7 @@ Releases before 0.2.1 are only listed on the
 
 ### Changed
 
-- In a playlist, hold a row while songs are selected to move it, and press Save order to keep the new order. This replaces the Reorder screen (#279).
+- To reorder a playlist, choose Reorder in its ⋯ menu or hold a song, drag the rows, and press Save order (#279).
 - Holding a song to start a selection no longer marks that song (#279).
 - Add to a playlist marks the playlists a song is already in, and a tap adds or removes it without closing the sheet.
 

@@ -267,10 +267,11 @@ export default function PlaylistScreen() {
    *  server keeps - it would rewrite that order to whatever the view happens to
    *  show, which is a sort the hand never asked for and cannot undo - so over
    *  another view neither the grip nor the bar's Save order is offered. The
-   *  drag is entered where the order is edited: a hold while songs are
-   *  selected, which is why the ⋯ menu has no Reorder mode to fall back to.
+   *  drag is entered with a hold on a row, or from Reorder in the ⋯ menu, which
+   *  goes back to this view first.
    */
   const serverOrder = sort.field === 'recent' && sort.dir === 'asc';
+  const openReorder = useRef<() => void>(() => {});
 
   /** Removes several songs (real indices) with deferred delete and undo. */
   function removeMany(indices: number[]) {
@@ -408,7 +409,7 @@ export default function PlaylistScreen() {
           //  whatever order the hand ended with (#279).
           reorder:
             hasOrder
-              ? { onSave: (ids) => void onReorderSave(ids), serverOrder }
+              ? { onSave: (ids) => void onReorderSave(ids), serverOrder, openRef: openReorder }
               : undefined,
         }}
         footer={
@@ -536,6 +537,19 @@ export default function PlaylistScreen() {
               <Icon name="create-outline" size={24} color={colors.text} />
               <Text style={styles.actionText}>{t('Edit playlist')}</Text>
             </Pressable>
+            {hasOrder && data.songs.length > 1 ? (
+              <Pressable
+                style={({ pressed }) => [styles.action, pressed && { opacity: 0.6 }]}
+                onPress={() => {
+                  close();
+                  if (!serverOrder) setSort({ field: 'recent', dir: 'asc' });
+                  openReorder.current();
+                }}
+              >
+                <Icon name="reorder-two" size={24} color={colors.text} />
+                <Text style={styles.actionText}>{t('Reorder')}</Text>
+              </Pressable>
+            ) : null}
             {canAutoDownload ? (
               <Pressable
                 style={({ pressed }) => [styles.action, pressed && { opacity: 0.6 }]}
