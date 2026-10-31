@@ -3,7 +3,6 @@ import { Platform } from 'react-native';
 import { create } from 'zustand';
 
 import { isLanguage, LANGUAGE_NAMES, type Language } from '@/i18n/languages';
-import { CORNERS_FULL, COVER_CORNERS_DEFAULT, savedBorderRadius, savedCoverCorners } from '@/lib/corners';
 import { pushArtworkEncodeFps } from '@/lib/artworkEncode';
 import { type TabSegment } from '@/lib/tabOrigin';
 import { hashKey } from '@/lib/localLibrary';
@@ -15,7 +14,7 @@ import { getItem, setItem } from '@/lib/storage';
 import {
   applyAccents,
   applyBackgroundTint,
-  applyBorderRadius,
+  applyBorderStyle,
   applyPureBlack,
   BACKGROUND_TINTS,
   applyThemePreference,
@@ -23,6 +22,7 @@ import {
   DEFAULT_ACCENT,
   isThemePreference,
   type BackgroundTint,
+  type BorderStyle,
   type ThemeMode,
   type ThemePreference,
 } from '@/theme';
@@ -361,6 +361,9 @@ export type LyricsWeight = (typeof LYRICS_WEIGHTS)[number];
 export type LyricsAlign = 'left' | 'center';
 /** What sits next to play on the mini player. */
 export type MiniPlayerButtons = 'favorite' | 'next' | 'previousNext' | 'none';
+/** The corners of the cover art in the player. */
+export type CoverCorners = 'square' | 'rounded' | 'round';
+
 /**
  * When a song that is downloaded plays from the file instead of the server.
  *
@@ -1076,10 +1079,9 @@ interface SettingsState extends Omit<AutoSetters, CustomSetter> {
   miniPlayerProgress: boolean;
   /** The time right of the seek bar counts down what is left, not the length. */
   showRemainingTime: boolean;
-  /** The corners of the covers, 0 to 100 (see `coverRadiusAt`). */
-  coverCorners: number;
-  /** The corners of everything else, 0 to 100 (see `radiusAt`). */
-  borderRadius: number;
+  coverCorners: CoverCorners;
+  /** Which corner ladder the app draws: this one or the flatter one. */
+  borderStyle: BorderStyle;
   /** When a downloaded song plays from disk instead of being streamed. */
   preferDownloads: PreferDownloads;
   /** Circular artist photo next to the name on the album screen. */
@@ -1327,7 +1329,7 @@ interface SettingsState extends Omit<AutoSetters, CustomSetter> {
   setThemeDarkFrom: (hour: number) => void;
   setPureBlack: (value: boolean) => void;
   setBackgroundTint: (value: BackgroundTint) => void;
-  setBorderRadius: (value: number) => void;
+  setBorderStyle: (value: BorderStyle) => void;
   setCustomFont: (fontFamily: string | null, uri: string | null) => void;
   /** Resets to factory defaults (language is preserved). */
   resetToDefaults: () => void;
@@ -1432,8 +1434,8 @@ const DEFAULTS = {
   miniPlayerButtons: 'favorite' as MiniPlayerButtons,
   miniPlayerProgress: true,
   showRemainingTime: false,
-  coverCorners: COVER_CORNERS_DEFAULT,
-  borderRadius: CORNERS_FULL,
+  coverCorners: 'rounded' as CoverCorners,
+  borderStyle: 'round' as BorderStyle,
   preferDownloads: 'always' as PreferDownloads,
   showArtistPhoto: true,
   showDiscHeaders: true,
@@ -1590,7 +1592,7 @@ function applyFactoryLook() {
   applyThemePreference(DEFAULTS.themeMode);
   applyPureBlack(DEFAULTS.pureBlack);
   applyBackgroundTint(DEFAULTS.backgroundTint);
-  applyBorderRadius(DEFAULTS.borderRadius);
+  applyBorderStyle(DEFAULTS.borderStyle);
 }
 
 /**
@@ -1602,9 +1604,7 @@ function applySaved(raw: unknown, set: (partial: Partial<SettingsState>) => void
   // Typed as what this version writes, plus the earlier shapes that are
   // read only to migrate them. Nothing here is trusted: every value is
   // checked before it is used.
-  const parsed = (raw && typeof raw === 'object' ? raw : {}) as Partial<Omit<Persisted, Reshaped | 'coverCorners'>> & {
-    coverCorners?: unknown;
-    borderStyle?: unknown;
+  const parsed = (raw && typeof raw === 'object' ? raw : {}) as Partial<Omit<Persisted, Reshaped>> & {
     showAudioQuality?: string | boolean;
     homeSections?: unknown;
     homeChips?: unknown;
@@ -1776,9 +1776,13 @@ function applySaved(raw: unknown, set: (partial: Partial<SettingsState>) => void
   if (oneOf(parsed.miniPlayerButtons, ['favorite', 'next', 'previousNext', 'none'] as const)) {
     set({ miniPlayerButtons: parsed.miniPlayerButtons });
   }
-  const borderRadius = savedBorderRadius(parsed.borderRadius, parsed.borderStyle);
-  set({ borderRadius, coverCorners: savedCoverCorners(parsed.coverCorners, parsed.borderStyle) });
-  applyBorderRadius(borderRadius);
+  if (oneOf(parsed.coverCorners, ['square', 'rounded', 'round'] as const)) {
+    set({ coverCorners: parsed.coverCorners });
+  }
+  if (oneOf(parsed.borderStyle, ['round', 'pointier'] as const)) {
+    set({ borderStyle: parsed.borderStyle });
+    applyBorderStyle(parsed.borderStyle);
+  }
   if (
     parsed.preferDownloads === 'always' ||
     parsed.preferDownloads === 'cellular' ||
@@ -2183,9 +2187,9 @@ export const useSettings = create<SettingsState>((set, get) => ({
     persist(snapshot(get));
   },
 
-  setBorderRadius: (borderRadius) => {
-    applyBorderRadius(borderRadius);
-    set({ borderRadius });
+  setBorderStyle: (borderStyle) => {
+    applyBorderStyle(borderStyle);
+    set({ borderStyle });
     persist(snapshot(get));
   },
 

@@ -35,7 +35,7 @@ import { episodeHeart, heartedSong, togglePodcastHeart } from '@/api/podcasts';
 import { ArtistPlayerCard } from '@/components/ArtistPlayerCard';
 import { AudioQualityBadge } from '@/components/AudioQualityBadge';
 import { SeekBar } from '@/components/SeekBar';
-import { Cover, useRedrawOnReturn, useSettledSource } from '@/components/Cover';
+import { Cover, coverRadius, useRedrawOnReturn, useSettledSource } from '@/components/Cover';
 import {
   AnimatedArtworkBackground,
   AnimatedArtworkView,
@@ -57,7 +57,6 @@ import { useLocalProfile } from '@/hooks/useLocalProfile';
 import { useLyrics } from '@/hooks/useLyrics';
 import { useScreenSize } from '@/hooks/useScreenSize';
 import { useT } from '@/i18n';
-import { coverRadiusAt } from '@/lib/corners';
 import { revealOffset } from '@/lib/playerReveal';
 import { artistTargets } from '@/lib/artistNav';
 import { routeLook } from '@/lib/audioRouteTypes';
@@ -1026,7 +1025,7 @@ export default function PlayerScreen() {
   const coverSize = coverBoxH
     ? Math.max(COVER_MIN, Math.min(coverBoxW || coverMax, coverBoxH - starsBlock))
     : coverMax;
-  const coverCorner = coverRadiusAt(coverCorners, coverSize);
+  const coverCorner = coverRadius(coverCorners, coverSize);
   // Left-over height once the cover and the stars have taken their share, split
   // between the two sides. Padding doesn't feed back into the measurement: the
   // slot's height comes from `flex: 1`, not from its contents.

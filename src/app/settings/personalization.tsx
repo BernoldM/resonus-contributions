@@ -8,7 +8,6 @@ import {
   SettingsGroup,
   SettingsPage,
   settingsStyles,
-  SliderRow,
   SwitchList,
 } from '@/components/SettingsUI';
 import { canBlurBars } from '@/components/BarBlur';
@@ -16,11 +15,12 @@ import { useLocalProfile } from '@/hooks/useLocalProfile';
 import { useT } from '@/i18n';
 import { haptic } from '@/lib/haptics';
 import { useAuthStore } from '@/store/auth';
-import { useTheme } from '@/theme';
+import { useTheme, type BorderStyle } from '@/theme';
 import {
   APP_FONT_LABELS,
   LANGUAGE_NAMES,
   useSettings,
+  type CoverCorners,
   type DefaultTab,
   type SwipeAction,
 } from '@/store/settings';
@@ -79,8 +79,8 @@ export default function AppearanceSettings() {
   const appFont = useSettings((s) => s.appFont);
   const coverCorners = useSettings((s) => s.coverCorners);
   const setCoverCorners = useSettings((s) => s.setCoverCorners);
-  const borderRadius = useSettings((s) => s.borderRadius);
-  const setBorderRadius = useSettings((s) => s.setBorderRadius);
+  const borderStyle = useSettings((s) => s.borderStyle);
+  const setBorderStyle = useSettings((s) => s.setBorderStyle);
 
   return (
     <SettingsPage title={t('Appearance')}>
@@ -104,22 +104,25 @@ export default function AppearanceSettings() {
             chevron
             onPress={() => router.push('/settings/font')}
           />
-          <SliderRow
+          <SelectList<CoverCorners>
             label={t('Cover corners')}
+            options={[
+              { value: 'square', label: t('Square') },
+              { value: 'rounded', label: t('Rounded') },
+              { value: 'round', label: t('More rounded') },
+            ]}
             value={coverCorners}
-            max={100}
-            step={5}
-            formatValue={(v) => `${v}%`}
             onChange={setCoverCorners}
           />
-          <SliderRow
+          <SelectList<BorderStyle>
             label={t('Border radius')}
             description={t('Round corners everywhere, or flatter ones')}
-            value={borderRadius}
-            max={100}
-            step={5}
-            formatValue={(v) => `${v}%`}
-            onChange={setBorderRadius}
+            options={[
+              { value: 'round', label: t('Round') },
+              { value: 'pointier', label: t('Pointier') },
+            ]}
+            value={borderStyle}
+            onChange={setBorderStyle}
           />
         </SettingsGroup>
 

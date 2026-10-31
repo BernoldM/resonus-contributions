@@ -16,7 +16,6 @@ Releases before 0.2.1 are only listed on the
 
 ### Changed
 
-- Cover corners and Border radius are now sliders, and both go down to fully square.
 - Add to a playlist marks the playlists a song is already in, and a tap adds or removes it without closing the sheet.
 
 ### Fixed
