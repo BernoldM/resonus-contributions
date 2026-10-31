@@ -88,6 +88,8 @@ export function PodcastsBrowser({ embedded, actionRef, searchOpen }: BrowserProp
 
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState('');
+  // The empty screen's way into the Store, until a show lands.
+  const [browsing, setBrowsing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -109,7 +111,7 @@ export function PodcastsBrowser({ embedded, actionRef, searchOpen }: BrowserProp
   const discover = useQuery({
     queryKey: ['podcastDiscover', term],
     queryFn: () => (term.length > 1 ? searchPodcasts(term) : charts()),
-    enabled: !!embedded,
+    enabled: !!embedded || browsing,
     // iTunes answers are stable enough to hold for three days: the Store is not
     // asked again on every visit, and a search you already ran stays put.
     staleTime: 1000 * 60 * 60 * 72,
@@ -161,6 +163,7 @@ export function PodcastsBrowser({ embedded, actionRef, searchOpen }: BrowserProp
 
   const showSearch = (data?.length ?? 0) > SEARCH_FROM;
   const boxOpen = useSearchBox(embedded, searchOpen, () => setQuery(''));
+  const discovering = embedded || (browsing && !data?.length);
 
   const discoverList = discover.data ?? [];
 
@@ -197,7 +200,7 @@ export function PodcastsBrowser({ embedded, actionRef, searchOpen }: BrowserProp
         </View>
       )}
 
-      {(embedded ? boxOpen : showSearch) ? (
+      {(embedded ? boxOpen : showSearch || discovering) ? (
         <View style={styles.searchBar}>
           <Icon name="search" size={18} color={colors.textMuted} />
           <TextInput
@@ -218,7 +221,7 @@ export function PodcastsBrowser({ embedded, actionRef, searchOpen }: BrowserProp
         </View>
       ) : null}
 
-      {embedded ? (
+      {discovering ? (
         discover.isLoading ? (
           <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.accent} />
         ) : discover.isError ? (
@@ -339,7 +342,12 @@ export function PodcastsBrowser({ embedded, actionRef, searchOpen }: BrowserProp
             </Pressable>
           )}
           ListEmptyComponent={
-            <EmptyState icon="headset-outline" title={t('No podcasts')} />
+            <EmptyState
+              icon="headset-outline"
+              title={t('No podcasts')}
+              subtitle={t('Find one, or add it with the address of its feed.')}
+              action={{ label: t('Find a podcast'), onPress: () => setBrowsing(true) }}
+            />
           }
         />
       )}

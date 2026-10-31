@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomSheetAnim } from '@/hooks/useBottomSheetAnim';
 import { useScreenSize } from '@/hooks/useScreenSize';
 import { usePodcastFavoriteIds } from '@/lib/podcastFavorites';
+import { usePodcastPlayedIds } from '@/lib/podcastPlayed';
 import {
   canGoIntoPlaylist,
   songCoverUrl,
@@ -33,7 +34,7 @@ import {
 import { useCanShare } from '@/hooks/useCanShare';
 import { useFavoriteIds } from '@/hooks/useFavoriteIds';
 import { applyStarChange, resyncFavorites } from '@/lib/favoritesCache';
-import { heartedSong, togglePodcastHeart } from '@/api/podcasts';
+import { heartedSong, setEpisodePlayed, togglePodcastHeart } from '@/api/podcasts';
 import { isManualOffline } from '@/api/netGate';
 import { artistTargets } from '@/lib/artistNav';
 import { pushOrReplace } from '@/lib/pushOrReplace';
@@ -165,6 +166,7 @@ export function SongMenuSheet() {
   // A podcast episode's heart is the device's own, filed in SQLite.
   const podcastFav = usePodcastFavoriteIds(!!song?.podcastChannelId);
   const favorited = song ? heartedSong(song, podcastFav, favIds) : false;
+  const played = usePodcastPlayedIds(song?.podcastChannelId).has(song?.id ?? '');
 
   const [mode, setMode] = useState<'actions' | 'sleep' | 'rating' | 'export'>(
     'actions',
@@ -513,6 +515,18 @@ export function SongMenuSheet() {
                       show is both — so the two collapse into one "Go to Podcast". */}
                   {song.podcastChannelId ? (
                     <Action
+                      icon={played ? 'ellipse-outline' : 'checkmark-circle-outline'}
+                      label={played ? t('Mark as unplayed') : t('Mark as played')}
+                      onPress={() => {
+                        void setEpisodePlayed(song, !played).catch(() =>
+                          toast(t("Couldn't complete the action")),
+                        );
+                        close();
+                      }}
+                    />
+                  ) : null}
+                  {song.podcastChannelId ? (
+                    <Action
                       icon="headset-outline"
                       label={t('Go to Podcast')}
                       onPress={() => goDetail(`/podcast/${song.podcastChannelId}`)}
@@ -697,7 +711,7 @@ export function SongMenuSheet() {
                   />
                   <Action
                     icon="information-circle-outline"
-                    label={t('Song information')}
+                    label={song.podcastChannelId ? t('Episode information') : t('Song information')}
                     onPress={() => {
                       dismiss(() => {
                         useSongInfo.getState().open(song);

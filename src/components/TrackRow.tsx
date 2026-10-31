@@ -63,7 +63,7 @@ interface Props {
    *  one of the new arrivals: the words a listener needs to pick an episode out
    *  of a feed. Absent for albums, playlists and search.
    */
-  episode?: { description?: string; publishedAt?: number; fresh?: boolean };
+  episode?: { description?: string; publishedAt?: number; fresh?: boolean; played?: boolean };
   /** Shows the ⋯ menu button (default true; works offline too). */
   showMenu?: boolean;
   /** Shows the mini album cover on the left (Spotify style). */
@@ -210,6 +210,7 @@ function TrackRowBase({
     [
       song.duration ? formatDuration(song.duration) : null,
       episode.publishedAt ? formatEpisodeDate(episode.publishedAt, lang) : null,
+      episode.played ? t('Played') : null,
     ].filter(Boolean).join(' · ');
 
   // Swipe right = configurable action (Spotify-style gesture). The row returns

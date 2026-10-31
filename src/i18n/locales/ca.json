@@ -818,5 +818,14 @@
   "{name} is playing something else": "{name} està reproduint una altra cosa",
   "Pill-shaped navigation bar": "Barra de navegació en forma de píndola",
   "Pill-shaped mini player": "Minireproductor en forma de píndola",
-  "{n} of {songs}": "{n} de {songs}"
+  "{n} of {songs}": "{n} de {songs}",
+  "Episode information": "Informació de l'episodi",
+  "Mark as played": "Marca com a escoltat",
+  "Mark as unplayed": "Marca com a no escoltat",
+  "Played": "Escoltat",
+  "Hide played": "Amaga els escoltats",
+  "Show played": "Mostra els escoltats",
+  "Find one, or add it with the address of its feed.": "Cerca'n un o afegeix-lo amb l'adreça del seu feed.",
+  "Download new episodes of favorite podcasts": "Baixa els episodis nous dels pòdcasts preferits",
+  "The latest 3 of each new batch, over Wi-Fi only.": "Els 3 últims de cada tanda nova, només per Wi-Fi."
 }

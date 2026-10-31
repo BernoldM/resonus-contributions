@@ -62,7 +62,7 @@ import {
 } from '@/lib/animatedArtwork';
 import { tg } from '@/i18n';
 import { transcodeTarget } from '@/lib/audioQuality';
-import { episodeResumeAt } from '@/lib/episodeResume';
+import { episodePlayed, episodeResumeAt } from '@/lib/episodeResume';
 import { hashKey } from '@/lib/localLibrary';
 import { getEpisodeProgress, saveEpisodeProgress } from '@/lib/podcastDb';
 import { holdSpeculation, releaseSpeculation, speculationOpen } from '@/lib/speculation';
@@ -1046,7 +1046,7 @@ const EPISODE_SAVE_SEC = 5;
  * lands near that second (`armed`) none are believed: one from the previous
  * source, or a seek that never took, would overwrite where it was left.
  */
-let episodeMark: { song: Song; sec: number; armed: boolean } | null = null;
+let episodeMark: { song: Song; sec: number; armed: boolean; played?: boolean } | null = null;
 
 function markEpisode(song: Song, sec: number) {
   episodeMark = song.podcastChannelId ? { song, sec, armed: false } : null;
@@ -1056,12 +1056,36 @@ function writeEpisodeProgress(sec: number) {
   const mark = episodeMark;
   if (!mark?.song.podcastChannelId) return;
   mark.sec = sec;
+  const durationSec = usePlayerStore.getState().durationSec || (mark.song.duration ?? 0);
+  const played = episodePlayed(sec, durationSec);
+  const crossed = played !== mark.played;
+  mark.played = played;
   void saveEpisodeProgress(hashKey(profileScopeId()), {
     id: mark.song.id,
     channelId: mark.song.podcastChannelId,
     positionSec: sec,
-    durationSec: usePlayerStore.getState().durationSec || (mark.song.duration ?? 0),
-  }).catch(() => {});
+    durationSec,
+  })
+    .then(() => {
+      if (crossed) queryClient.invalidateQueries({ queryKey: ['podcastPlayed'] });
+    })
+    .catch(() => {});
+}
+
+/**
+ * An episode was marked by hand. If it is the one in the player, its beats would
+ * undo the mark: played stops recording it, unplayed goes back to the start.
+ */
+export function episodeMarkedByHand(id: string, played: boolean) {
+  const st = usePlayerStore.getState();
+  const song = currentSong(st);
+  if (song?.id !== id) return;
+  if (played) {
+    episodeMark = null;
+    return;
+  }
+  markEpisode(song, 0);
+  st.seekTo(0);
 }
 
 function noteEpisodeBeat(status: AudioStatus, justPaused: boolean) {

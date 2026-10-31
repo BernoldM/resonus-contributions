@@ -818,5 +818,14 @@
   "{name} is playing something else": "{name} está reproduciendo otra cosa",
   "Pill-shaped navigation bar": "Barra de navegación en forma de píldora",
   "Pill-shaped mini player": "Minirreproductor en forma de píldora",
-  "{n} of {songs}": "{n} de {songs}"
+  "{n} of {songs}": "{n} de {songs}",
+  "Episode information": "Información del episodio",
+  "Mark as played": "Marcar como escuchado",
+  "Mark as unplayed": "Marcar como no escuchado",
+  "Played": "Escuchado",
+  "Hide played": "Ocultar escuchados",
+  "Show played": "Mostrar escuchados",
+  "Find one, or add it with the address of its feed.": "Busca uno o añádelo con la dirección de su feed.",
+  "Download new episodes of favorite podcasts": "Descargar episodios nuevos de pódcasts favoritos",
+  "The latest 3 of each new batch, over Wi-Fi only.": "Los 3 últimos de cada tanda nueva, solo por wifi."
 }

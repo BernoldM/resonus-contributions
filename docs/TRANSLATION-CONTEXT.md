@@ -5,7 +5,7 @@
      `src/i18n/context.jsonc`, and where a string shows up is read off the
      code, so both are fixed at the source and this page follows. -->
 
-Every string the app can show, under the screen it shows up on. 820 of them.
+Every string the app can show, under the screen it shows up on. 829 of them.
 The second column is only filled in where the English is ambiguous on its own
 If one tripped you up and the column is empty, that is worth telling us, and
 the answer goes into `src/i18n/context.jsonc` where the next translator of the
@@ -72,6 +72,7 @@ you are actually typing into, which is easier than reading it here.
 | `Download removed` | Toast: the file was deleted, the song stays in the library |
 | `Downloading Resonus {version}` |  |
 | `Duration` | Label of a field in the song information sheet: how long the song is |
+| `Episode information` |  |
 | `Explicit` | A value of `Content`: the recording carries a parental advisory (strong language). Also read out for the E badge next to a title |
 | `Export “{name}”?` | Confirms getting the files of an album or playlist out of the app |
 | `Fixes` | Heading in the update prompt over the bugs a release fixes |
@@ -83,6 +84,8 @@ you are actually typing into, which is easier than reading it here.
 | `Go to Podcast` | Song menu: open the show an episode belongs to. Not the act of broadcasting |
 | `Home` | The first tab, and a folder in the car |
 | `Library` | The settings section, and a folder in the car |
+| `Mark as played` |  |
+| `Mark as unplayed` |  |
 | `Mix of “{name}”` | What the player calls the queue once it has grown past its album into songs the app picked itself. `{name}` is the song it was grown from |
 | `Mix started` | The toast that says the app is now picking the songs |
 | `Moods` | Mood tags the server has on the song: mellow, energetic… |
@@ -547,8 +550,10 @@ you are actually typing into, which is easier than reading it here.
 | String | What it is |
 | --- | --- |
 | `Couldn't load this podcast.` | One show's own screen: its episodes would not read. The Retry button reads its feed again |
+| `Hide played` |  |
 | `No episodes` | A show whose feed lists no items at all: the publisher has nothing published |
 | `Podcast` | The kind word: a search result's type and a show's metadata line. A noun, not the verb 'to broadcast' |
+| `Show played` |  |
 
 ## Podcasts
 
@@ -562,6 +567,7 @@ you are actually typing into, which is easier than reading it here.
 | `Couldn't read this feed` | Filed under a show whose feed would not load, so the reason is still there offline. One show, not the whole list |
 | `Feed URL` | The field in the add-a-show sheet: the address of the show's feed, pasted in |
 | `Find a podcast` | The placeholder in the search box on the shows you keep: searches the iTunes directory, which answers with a show's feed address |
+| `Find one, or add it with the address of its feed.` |  |
 | `No episodes yet` | Where a show's episode count would be on the list of shows: nothing published yet |
 | `No podcasts` | Nothing kept on this phone yet: no show subscribed |
 | `Podcasts` | Shows kept on this phone, played from the address the publisher gives. Not something the music server stores |
@@ -730,6 +736,7 @@ you are actually typing into, which is easier than reading it here.
 | `Delete all downloads` |  |
 | `Delete all downloads?` |  |
 | `Download codec` |  |
+| `Download new episodes of favorite podcasts` |  |
 | `Download over Wi-Fi only` |  |
 | `Download quality` |  |
 | `Downloading` | Section header over the download settings. A heading, not something happening right now |
@@ -753,6 +760,7 @@ you are actually typing into, which is easier than reading it here.
 | `Song cache` | Copies of streamed songs the app keeps by itself and deletes to make room. Not the same as Downloads, which the person chose |
 | `Songs you stream are kept on this phone and play from it next time, with or without a connection. The next song in the queue is fetched ahead, so it is not streamed at all. When the cache is full, the songs played longest ago make room.` |  |
 | `Storage used` | Section header over the bar showing what is taking up room on the phone |
+| `The latest 3 of each new batch, over Wi-Fi only.` | The line under “Download new episodes of favorite podcasts”, explaining it |
 | `Transcode lossless files only` |  |
 | `Your server must support it.` |  |
 
@@ -1249,6 +1257,7 @@ you are actually typing into, which is easier than reading it here.
 | `Pause` | Read out by the screen reader for the pause button. A verb |
 | `Play` | Read out by the screen reader for the play button. A verb |
 | `Play next` | Action: put this song right after the one playing, without clearing the rest |
+| `Played` |  |
 | `Playing next` | The toast that says `Play next` worked. Not the same string, and not a heading |
 | `Playlist name` | The name field when making or renaming a playlist |
 | `Playlists` | A section on Home and in the library, and a folder in the car |

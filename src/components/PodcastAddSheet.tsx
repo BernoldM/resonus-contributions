@@ -1,5 +1,5 @@
 /** Sheet to add a podcast: paste the address of a feed. */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -28,6 +28,7 @@ export function PodcastAddSheet({ visible, onCancel, onAdded }: Props) {
   const [feedUrl, setFeedUrl] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const input = useRef<TextInput>(null);
 
   // Resets fields every time it opens.
   useEffect(() => {
@@ -64,6 +65,8 @@ export function PodcastAddSheet({ visible, onCancel, onAdded }: Props) {
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onCancel}
+      // `autoFocus` does not take inside a Modal on Android.
+      onShow={() => input.current?.focus()}
     >
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
@@ -96,6 +99,7 @@ export function PodcastAddSheet({ visible, onCancel, onAdded }: Props) {
               autoCorrect={false}
               keyboardType="url"
               inputMode="url"
+              ref={input}
             />
             {busy !== null ? (
               <ActivityIndicator style={{ marginTop: spacing.md }} color={colors.accent} />

@@ -179,7 +179,7 @@ interface Props {
    *  screen builds it once from the episodes it already holds; absent for
    *  albums and playlists, whose rows keep the artist line.
    */
-  episodeInfo?: Map<string, { description?: string; publishedAt?: number; fresh: boolean }>;
+  episodeInfo?: Map<string, { description?: string; publishedAt?: number; fresh: boolean; played: boolean }>;
   /** Offline download button (album/playlist header). */
   download?: {
     status: 'none' | 'active' | 'done';

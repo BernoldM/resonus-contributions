@@ -34,6 +34,7 @@ import { openPodcastMenu } from '@/components/PodcastMenuSheet';
 import { episodesLabel, useT } from '@/i18n';
 import { formatTotalDuration } from '@/lib/format';
 import { usePodcastFavoriteIds } from '@/lib/podcastFavorites';
+import { usePodcastPlayedIds } from '@/lib/podcastPlayed';
 import { invalidatePodcastCaches } from '@/lib/query';
 import { useSettings } from '@/store/settings';
 import { currentSong, usePlayerStore } from '@/store/player';
@@ -53,6 +54,8 @@ export default function PodcastScreen() {
   const lang = useSettings((s) => s.language);
   const hideUnavailable = useSettings((s) => s.hideUnavailableOffline);
   const showDescription = useSettings((s) => s.showPlaylistDescription);
+  const hidePlayed = useSettings((s) => s.podcastHidePlayed);
+  const setHidePlayed = useSettings((s) => s.setPodcastHidePlayed);
   const playQueue = usePlayerStore((s) => s.playQueue);
   const playingId = usePlayerStore((s) => currentSong(s)?.id);
 
@@ -89,6 +92,7 @@ export default function PodcastScreen() {
 
   // The hearts, so the favorite pill can show whether this show is hearted.
   const favSet = usePodcastFavoriteIds();
+  const playedIds = usePodcastPlayedIds(data.data?.channel.id);
 
   // The show's download, read the way an album's is: the same `files` map the
   // player uses, keyed by episode id, so "done" means every episode is on disk.
@@ -115,7 +119,9 @@ export default function PodcastScreen() {
     if (!data.data) return { songs: [] as Song[], meta: '', episodeInfo: undefined };
     const { channel, episodes: list } = data.data;
     const marked = markUnplayableOffline(list.map((e) => episodeToSong(e, channel)));
-    const shown = hideUnavailable ? marked.filter((s) => !s.unavailable) : marked;
+    const shown = marked.filter(
+      (s) => !(hideUnavailable && s.unavailable) && !(hidePlayed && playedIds.has(s.id)),
+    );
     const totalSec = list.reduce((acc, e) => acc + (e.duration ?? 0), 0);
     const line = [
       t('Podcast'),
@@ -131,18 +137,19 @@ export default function PodcastScreen() {
     // screen already holds, so the row never has to ask per row, and its
     // identity is stable across repaints (the row's memo keys on it).
     const since = channel.newSinceAt;
-    const info = new Map<string, { description?: string; publishedAt?: number; fresh: boolean }>(
+    const info = new Map<string, { description?: string; publishedAt?: number; fresh: boolean; played: boolean }>(
       list.map((e) => [
         e.id,
         {
           description: e.description,
           publishedAt: e.publishedAt,
           fresh: since !== undefined && (e.firstSeenAt ?? 0) >= since,
+          played: playedIds.has(e.id),
         },
       ]),
     );
     return { songs: shown, meta: line, episodeInfo: info };
-  }, [data.data, hideUnavailable, lang]);
+  }, [data.data, hideUnavailable, hidePlayed, playedIds, lang]);
 
   // Stable between progress ticks (only changes with status): if its identity
   // changed on every % update, the Pressable would lose its touch and you'd
@@ -217,6 +224,11 @@ export default function PodcastScreen() {
         }
         // The ⋯ opens the show's own sheet (store-driven, mounted globally).
         onMenu={() => openPodcastMenu(ch)}
+        addAction={{
+          label: hidePlayed ? t('Show played') : t('Hide played'),
+          icon: hidePlayed ? 'eye-outline' : 'eye-off-outline',
+          onPress: () => setHidePlayed(!hidePlayed),
+        }}
         emptyState={
           <EmptyState icon="headset-outline" title={t('No episodes')} />
         }

@@ -403,6 +403,23 @@ export async function saveEpisodeProgress(
   );
 }
 
+export async function clearEpisodeProgress(scope: string, id: string): Promise<void> {
+  const db = await podcastDb(scope);
+  await serialized(() => db.runAsync('DELETE FROM podcast_progress WHERE episode_id = ?', [id]));
+}
+
+export async function listEpisodeProgress(
+  scope: string,
+  channelId: string,
+): Promise<{ id: string; positionSec: number; durationSec: number }[]> {
+  const db = await podcastDb(scope);
+  const rows = await db.getAllAsync<{ episode_id: string; position_sec: number; duration_sec: number }>(
+    'SELECT episode_id, position_sec, duration_sec FROM podcast_progress WHERE channel_id = ?',
+    [channelId],
+  );
+  return rows.map((r) => ({ id: r.episode_id, positionSec: r.position_sec, durationSec: r.duration_sec }));
+}
+
 export async function getEpisodeProgress(
   scope: string,
   id: string,
