@@ -14,7 +14,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import Animated from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -27,7 +32,8 @@ import {
   playlistMembership,
   removeSongsFromPlaylist,
 } from '@/api/data';
-import { membershipOf } from '@/lib/playlistMembership';
+import { haptic } from '@/lib/haptics';
+import { membershipOf, type Membership } from '@/lib/playlistMembership';
 import { useScreenSize } from '@/hooks/useScreenSize';
 import { type Song } from '@/api/subsonic';
 import { useBottomSheetAnim } from '@/hooks/useBottomSheetAnim';
@@ -37,6 +43,7 @@ import { usePlaylistPicker } from '@/store/playlistPicker';
 import { useSettings } from '@/store/settings';
 import { useToast } from '@/store/toast';
 import { colors, fontSize, radius, SHEET_MAX_WIDTH, spacing, themed } from '@/theme';
+import { motion } from '@/theme/motion';
 import { Cover } from './Cover';
 import { Dialog } from './Dialog';
 
@@ -45,6 +52,45 @@ import { Dialog } from './Dialog';
  *  while rendering so a turn does not leave it taller than the screen (#131). */
 function playlistsMaxH(height: number): number {
   return Math.round(height * 0.6);
+}
+
+/** Passes its size a little and settles. */
+const CHECK_IN = Easing.out(Easing.back(2));
+
+/** The circle of a row. The check grows out of it when a tap sets it, not when a fetch corrects it. */
+function Mark({ state, tapped }: { state: Membership; tapped: boolean }) {
+  const checked = state === 'all';
+  const scale = useSharedValue(checked ? 1 : 0);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  // Only a change of mark moves it: `tapped` ending early must not cut the animation.
+  const shown = useRef(checked);
+
+  useEffect(() => {
+    if (shown.current === checked) return;
+    shown.current = checked;
+    const to = checked ? 1 : 0;
+    const { decorative: reduceMotion } = motion.reduceMotion;
+    if (!tapped) scale.value = to;
+    else if (checked) {
+      scale.value = withTiming(1, { duration: motion.duration.enter, easing: CHECK_IN, reduceMotion });
+    } else {
+      scale.value = withTiming(0, { duration: motion.duration.exit, easing: motion.easing.exit, reduceMotion });
+    }
+  }, [checked, tapped, scale]);
+
+  return (
+    <View>
+      {state === 'some' ? (
+        <Icon name="remove-circle-outline" size={24} color={colors.accent} />
+      ) : (
+        <Icon name="ellipse-outline" size={24} color={colors.textMuted} />
+      )}
+      <Animated.View style={[StyleSheet.absoluteFill, style]}>
+        <Icon name="checkmark-circle" size={24} color={colors.accent} />
+      </Animated.View>
+    </View>
+  );
 }
 
 /** Global instance (mounted once in the root layout): any place can open it
@@ -161,6 +207,7 @@ export function PlaylistPickerSheet({
     const before = present[playlistId] ?? [];
     const removing = membershipOf(before, wanted) === 'all';
     tapped.current.add(playlistId);
+    haptic('light');
     setBusy((prev) => ({ ...prev, [playlistId]: true }));
     setPresent((prev) => ({ ...prev, [playlistId]: removing ? [] : wanted }));
     try {
@@ -274,12 +321,8 @@ export function PlaylistPickerSheet({
                         </View>
                         {!ids ? (
                           <ActivityIndicator size="small" color={colors.textMuted} />
-                        ) : state === 'all' ? (
-                          <Icon name="checkmark-circle" size={24} color={colors.accent} />
-                        ) : state === 'some' ? (
-                          <Icon name="remove-circle-outline" size={24} color={colors.accent} />
                         ) : (
-                          <Icon name="ellipse-outline" size={24} color={colors.textMuted} />
+                          <Mark state={state ?? 'none'} tapped={!!busy[p.id]} />
                         )}
                       </Pressable>
                     );
