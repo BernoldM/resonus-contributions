@@ -20,14 +20,15 @@ Releases before 0.2.1 are only listed on the
 
 ### Fixed
 
+- Casting: more cases where the queue stayed on a song after it ended are handled (#285).
 - The progress bar looks the same on every Android phone.
 - Next and previous from other apps and devices, like Garmin watches, should now work (#307).
+- Podcast episodes pick up where you left them, even after playing music or restarting the app.
+- The podcasts screen says how to find a show when it is empty, and the feed address field is ready to type in.
 
 ## [0.8.5] - 2026-10-30
 
 ### Added
-- Podcast episodes pick up where you left them, even after playing music or restarting the app.
-- The podcasts screen says how to find a show when it is empty, and the feed address field is ready to type in.
 
 - Playback speed: a slider and −/+ buttons in steps of 0.01, a Preserve pitch switch that, turned off, lets the pitch follow the speed like a record, and the resulting BPM when the song has one (#277).
 - Podcasts: download episodes to play offline, favorite them, queue them, and find them in Library, search and Home. Thanks to Garrit Schröder.
