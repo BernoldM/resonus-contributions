@@ -22,6 +22,7 @@ Releases before 0.2.1 are only listed on the
 ## [0.8.5] - 2026-10-30
 
 ### Added
+- Podcast episodes pick up where you left them, even after playing music or restarting the app.
 
 - Playback speed: a slider and −/+ buttons in steps of 0.01, a Preserve pitch switch that, turned off, lets the pitch follow the speed like a record, and the resulting BPM when the song has one (#277).
 - Podcasts: download episodes to play offline, favorite them, queue them, and find them in Library, search and Home. Thanks to Garrit Schröder.

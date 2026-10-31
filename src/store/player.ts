@@ -62,6 +62,9 @@ import {
 } from '@/lib/animatedArtwork';
 import { tg } from '@/i18n';
 import { transcodeTarget } from '@/lib/audioQuality';
+import { episodeResumeAt } from '@/lib/episodeResume';
+import { hashKey } from '@/lib/localLibrary';
+import { getEpisodeProgress, saveEpisodeProgress } from '@/lib/podcastDb';
 import { holdSpeculation, releaseSpeculation, speculationOpen } from '@/lib/speculation';
 import { favoriteLabel, favoriteState, onFavoritesChange, toggleFavorite } from '@/lib/remoteFavorite';
 import type { Remap } from '@/lib/navidromeRemap';
@@ -85,7 +88,7 @@ import {
 } from '@/lib/queue';
 import { moreRadioTracks } from '@/lib/radioBuild';
 import { getItem, setItem } from '@/lib/storage';
-import { useAuthStore } from './auth';
+import { profileScopeId, useAuthStore } from './auth';
 import { checkAutoUrlNow } from './autoUrl';
 import { castSetState, castSetVolumeLevel, castUpdate, initCastMedia } from './castMedia';
 import { useDownloads } from './downloads';
@@ -607,6 +610,10 @@ function seekActive(sec: number) {
   const song = currentSong(state);
   pendingSeek = { sec, at: Date.now() };
   usePlayerStore.setState({ positionSec: sec });
+  if (song && episodeMark?.song.id === song.id) {
+    writeEpisodeProgress(sec);
+    episodeMark.armed = false;
+  }
   // Which of the three ways out this seek took, and whether anybody was
   // looking. A seek from the car happens with the app in the background, where
   // half of what this function can do is not certain to run, and the report is
@@ -1027,6 +1034,63 @@ function consumeQueuedOnIndexChange(next: number) {
   if (queuedCount !== st.queuedCount) usePlayerStore.setState({ queuedCount });
 }
 
+// ── Episode progress ─────────────────────────────────────────────────────────
+// The saved queue only knows the second of its current track, so playing
+// anything else forgot where an episode was left.
+
+/** How far an episode moves between writes. */
+const EPISODE_SAVE_SEC = 5;
+
+/**
+ * The episode in the player and the last second written for it. Until a beat
+ * lands near that second (`armed`) none are believed: one from the previous
+ * source, or a seek that never took, would overwrite where it was left.
+ */
+let episodeMark: { song: Song; sec: number; armed: boolean } | null = null;
+
+function markEpisode(song: Song, sec: number) {
+  episodeMark = song.podcastChannelId ? { song, sec, armed: false } : null;
+}
+
+function writeEpisodeProgress(sec: number) {
+  const mark = episodeMark;
+  if (!mark?.song.podcastChannelId) return;
+  mark.sec = sec;
+  void saveEpisodeProgress(hashKey(profileScopeId()), {
+    id: mark.song.id,
+    channelId: mark.song.podcastChannelId,
+    positionSec: sec,
+    durationSec: usePlayerStore.getState().durationSec || (mark.song.duration ?? 0),
+  }).catch(() => {});
+}
+
+function noteEpisodeBeat(status: AudioStatus, justPaused: boolean) {
+  const mark = episodeMark;
+  if (!mark || !status.isLoaded || status.isBuffering) return;
+  const sec = status.currentTime ?? 0;
+  if (!mark.armed) {
+    if (Math.abs(sec - mark.sec) < 3) mark.armed = true;
+    return;
+  }
+  if (justPaused || Math.abs(sec - mark.sec) >= EPISODE_SAVE_SEC) writeEpisodeProgress(sec);
+}
+
+/** Where to pick `song` up, or null when it is no episode or was never left. */
+async function storedEpisodeResume(song: Song | undefined): Promise<number | null> {
+  if (!song?.podcastChannelId) return null;
+  const left = await getEpisodeProgress(hashKey(profileScopeId()), song.id).catch(() => undefined);
+  if (!left) return null;
+  return episodeResumeAt(left.positionSec, left.durationSec || (song.duration ?? 0));
+}
+
+/** The player moved to `song` on its own (gapless, crossfade): it starts at zero. */
+function resumeEpisodeAfterMove(song: Song) {
+  markEpisode(song, 0);
+  void storedEpisodeResume(song).then((sec) => {
+    if (sec && currentSong(usePlayerStore.getState())?.id === song.id) seekActive(sec);
+  });
+}
+
 /** Which load is in charge, so an older one can tell it has been overtaken. */
 let loadToken = 0;
 
@@ -1079,8 +1143,11 @@ async function loadIndex(index: number, autoplay: boolean): Promise<boolean> {
   resetListen();
   playerFailed = false;
   consumeQueuedOnIndexChange(index);
+  const asked = usePlayerStore.getState().queue[index];
+  const resumeSec = (await storedEpisodeResume(asked)) ?? 0;
+  if (token !== loadToken) return true;
   if (remoteKind()) {
-    await remoteLoadIndex(index, autoplay);
+    await remoteLoadIndex(index, autoplay, resumeSec);
     return true;
   }
   await ensureAudioMode();
@@ -1136,11 +1203,14 @@ async function loadIndex(index: number, autoplay: boolean): Promise<boolean> {
     isPlaying: autoplay,
     isBuffering: autoplay,
   });
+  const startSec = song.id === asked?.id ? resumeSec : 0;
+  markEpisode(song, startSec);
   try {
     applyLoop(p);
     // Effective volume of THIS song (user × ReplayGain).
     p.volume = effectiveVolume(song);
     applySpeed(p, song);
+    if (startSec > 0) seekActive(startSec);
     if (autoplay) p.play();
     applyLockScreen(p, song);
     onTrackChanged(song);
@@ -2166,6 +2236,7 @@ function onTrackTransition() {
   });
   applyLockScreen(p, song);
   onTrackChanged(song);
+  resumeEpisodeAfterMove(song);
   if (!song.url && !localSourceFor(song)) void ensureTranscodeOffsetSupport();
   scheduleNextSource();
 }
@@ -2533,6 +2604,7 @@ function startCrossfade(index: number, fadeSec: number) {
   });
   applyLockScreen(p, song);
   onTrackChanged(song);
+  resumeEpisodeAfterMove(song);
   // Each end of the fade points to the effective volume of ITS song
   // (ReplayGain per track); the user volume is read live on each tick.
   runFade(p, fadeSec, gainFactor(outgoingSong), gainFactor(song));
@@ -3141,6 +3213,7 @@ function onStatus(status: AudioStatus, live = false) {
       isBuffering: buffering,
     });
   }
+  noteEpisodeBeat(status, prev.isPlaying && !status.playing);
   maybeScrobbleThreshold(positionSec, status.playing);
   maybeDetectStall(intendPlay, buffering, positionSec);
   // Queue sync with the server.
@@ -4876,10 +4949,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     // If something already started playing in the meantime, don't override the queue.
     if (get().queue.length > 0) return true;
     const index = Math.min(Math.max(0, saved.index ?? 0), saved.queue.length - 1);
+    // An episode's own record is newer: the queue is rewritten far less often.
     const positionSec =
-      typeof saved.positionSec === 'number' && Number.isFinite(saved.positionSec)
+      (await storedEpisodeResume(saved.queue[index])) ??
+      (typeof saved.positionSec === 'number' && Number.isFinite(saved.positionSec)
         ? Math.max(0, saved.positionSec)
-        : 0;
+        : 0);
+    if (get().queue.length > 0) return true;
     attachAppState();
     queueOrigin = 'saved queue';
     set({
