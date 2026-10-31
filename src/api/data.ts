@@ -1653,6 +1653,20 @@ export function scrobble(id: string): Promise<void> {
   return Subsonic.scrobble(auth(), id).catch(() => {});
 }
 
+/**
+ * Whether a song is the kind a playlist can name: a track the server has an
+ *  id for. A radio station and a podcast episode carry a `url` of their own
+ *  instead (`playRadio`, `episodeToSong`): the station's id belongs to the
+ *  station list and an episode belongs to its show, so `updatePlaylist` would
+ *  be asked of an id it knows nothing about. Library tracks, downloads and
+ *  the phone's own files carry no address and do go in. The song menu and the
+ *  queue spelled the episode half of this out; as one rule it also answers for
+ *  the heart, which offers its hold only where this says yes (#286).
+ */
+export function canGoIntoPlaylist(song: Song): boolean {
+  return !song.url;
+}
+
 export async function addToPlaylist(playlistId: string, songId: string): Promise<void> {
   if (isOffline()) {
     if (!serverOffline()) return Local.addToPlaylist(playlistId, songId);
