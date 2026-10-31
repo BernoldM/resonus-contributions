@@ -5,7 +5,7 @@
      `src/i18n/context.jsonc`, and where a string shows up is read off the
      code, so both are fixed at the source and this page follows. -->
 
-Every string the app can show, under the screen it shows up on. 831 of them.
+Every string the app can show, under the screen it shows up on. 826 of them.
 The second column is only filled in where the English is ambiguous on its own
 If one tripped you up and the column is empty, that is worth telling us, and
 the answer goes into `src/i18n/context.jsonc` where the next translator of the
@@ -912,7 +912,7 @@ you are actually typing into, which is easier than reading it here.
 | `At the top of Home, what is playing in your other apps and devices, ready to carry on here.` |  |
 | `Blur` | One of the values of “Navigation bar style” |
 | `Border radius` |  |
-| `Cover corners` | The corners of every cover art picture in the app, whose choices are Square, Rounded and More rounded |
+| `Cover corners` | The corners of every cover art picture in the app, set with a slider from square to very round |
 | `Dark` | The appearance the app has always had, and what it uses unless the other is chosen. |
 | `Explore` | The tab holding everything the server has: all albums, artists, songs, genres, stations and folders |
 | `Explore sections` |  |
@@ -929,7 +929,6 @@ you are actually typing into, which is easier than reading it here.
 | `Interface` | Section header grouping toggles |
 | `Language` |  |
 | `Light` | The light appearance, in Settings › Theme |
-| `More rounded` | Corners of the cover art: rounder than the usual |
 | `Navigation` | Section header: how you move around the app |
 | `Navigation bar` | Settings screen: which tabs are on the bar at the bottom, and in what order |
 | `Navigation bar style` |  |
@@ -937,17 +936,13 @@ you are actually typing into, which is easier than reading it here.
 | `Open the app on` | Which tab the app opens on, and comes back to after a while away |
 | `Pill-shaped navigation bar` |  |
 | `Playing on other devices` |  |
-| `Pointier` | One of the values of “Border radius” |
 | `Quick grid` | The grid of shortcut tiles on Home |
 | `Radios` |  |
-| `Round` | One of the values of “Border radius” |
 | `Round corners everywhere, or flatter ones` | The line under “Border radius”, explaining it |
-| `Rounded` | Corners of the cover art: slightly rounded, the usual look |
 | `Scheduled` | A theme mode: light from one hour of the day, dark from another |
 | `Show tab names` |  |
 | `Solid` | One of the values of “Navigation bar style” |
 | `Song lists` | The setting for how song lists look |
-| `Square` | Corners of the cover art: sharp, not rounded at all |
 | `Start on your playlists` | A switch: with it on, Your library with no chip pressed shows the Favorites entry and the playlists, the way it used to, instead of albums, artists and playlists mixed together |
 | `Swipe left` | What dragging a song to the left in a list does |
 | `Swipe right` | What dragging a song to the right in a list does. Its values are the actions listed under it |

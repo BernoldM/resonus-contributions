@@ -19,6 +19,7 @@
  *    but React still has to be told to paint again. Same idea as `useT()` for
  *    the language.
  */
+import { CORNERS_FULL, radiusAt, type RadiusScale } from '@/lib/corners';
 import { useSyncExternalStore } from 'react';
 import { Appearance, AppState, Platform } from 'react-native';
 import type { ImageStyle, TextStyle, ViewStyle } from 'react-native';
@@ -838,57 +839,38 @@ export const spacing = {
  * almost everything in the app sat on 8, which reads flat next to anything
  * drawn in the last few years.
  *
- * Which ladder is drawn is a setting (Appearance > Border radius): `round`
- * keeps this one, `pointier` steps down and goes flat on the big surfaces
- * (4/8/12, then 12). The object below is rewritten in place when it changes,
- * the way `colors` is: anything reading `radius.md` while rendering gets the
- * current step, and `themed()` styles rebuild with it.
+ * How far up it goes is a setting (Appearance > Border radius): see `radiusAt`.
+ * The object below is rewritten in place when it changes, the way `colors` is:
+ * anything reading `radius.md` while rendering gets the current step, and
+ * `themed()` styles rebuild with it.
  */
-/**
- * Which corner ladder the app draws.
- */
-export type BorderStyle = 'round' | 'pointier';
+export type { RadiusScale };
 
-/** This ladder: sm 6, md 10, lg 16, xl 24, sheets 32. */
-const RADIUS_ROUND = { sm: 6, md: 10, lg: 16, xl: 24, xxl: 32, pill: 999 };
-/** The flatter ladder: 4/8/12, then 12 everywhere but pills. */
-const RADIUS_POINTIER = { sm: 4, md: 8, lg: 12, xl: 12, xxl: 12, pill: 999 };
+/** The corner ladder in force. Rewritten in place by `applyBorderRadius`. */
+export const radius: RadiusScale = radiusAt(CORNERS_FULL);
 
-export interface RadiusScale {
-  sm: number;
-  md: number;
-  lg: number;
-  xl: number;
-  /** A sheet rising from the bottom, and anything else that owns the screen. */
-  xxl: number;
-  pill: number;
-}
-
-/** The corner ladder in force. Rewritten in place by `applyBorderStyle`. */
-export const radius: RadiusScale = { ...RADIUS_ROUND };
-
-/** The ladder `radius` currently draws. Read live by the helpers below. */
-let borderStyle: BorderStyle = 'round';
+/** The slider's value. Read live by the helpers below. */
+let borderRadius: number = CORNERS_FULL;
 
 /**
- * Swaps the corner ladder for the whole app and repaints everyone reading
- * it (same wake-up as a theme change: `themed()` styles rebuild, subscribed
- * components paint again).
+ * Sets the corners for the whole app and repaints everyone reading them (same
+ * wake-up as a theme change: `themed()` styles rebuild, subscribed components
+ * paint again).
  */
-export function applyBorderStyle(style: BorderStyle): void {
-  borderStyle = style;
-  Object.assign(radius, style === 'round' ? RADIUS_ROUND : RADIUS_POINTIER);
+export function applyBorderRadius(percent: number): void {
+  borderRadius = percent;
+  Object.assign(radius, radiusAt(percent));
   rebuild();
 }
 
 /**
- * A value that differs between the two ladders by more than the ladder step:
- * `round` with Round, `pointy` with Pointier. Reads the live style, so `themed()` styles (rebuilt on
- * every theme wake-up, which a style switch triggers) follow it with no
- * subscription. Pass ladder steps, not numbers, so both stay in scale.
+ * A value that differs by more than the ladder step: `round` at the top of the
+ * slider, `pointy` anywhere below it. Reads the live value, so `themed()` styles
+ * (rebuilt on every theme wake-up) follow it with no subscription. Pass ladder
+ * steps, not numbers, so both stay in scale.
  */
 export function restyled(round: number, pointy: number): number {
-  return borderStyle === 'round' ? round : pointy;
+  return borderRadius >= CORNERS_FULL ? round : pointy;
 }
 
 /**

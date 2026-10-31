@@ -9,6 +9,10 @@ Releases before 0.2.1 are only listed on the
 
 ## [Unreleased]
 
+### Changed
+
+- Cover corners and Border radius are now sliders, and both go down to fully square.
+
 ### Fixed
 
 - The progress bar looks the same on every Android phone.

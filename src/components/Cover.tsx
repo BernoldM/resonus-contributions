@@ -6,26 +6,13 @@ import { AppState, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { CACHED_COVER, COVER } from '@/api/data';
 import { bump } from '@/lib/perfLog';
-import { useSettings, type CoverCorners } from '@/store/settings';
+import { coverRadiusAt } from '@/lib/corners';
+import { useSettings } from '@/store/settings';
 import { colors, radius } from '@/theme';
 
-/**
- * The corner of a cover of this size (Settings › Appearance › Cover corners).
- *
- * Rounded is one corner for every card-sized cover: letting it climb with the
- * picture was tried and reverted, since at the top of the scale it eats into
- * the artwork. Thumbnails (≤56 px) get the smaller one, which nests inside the
- * mini player's own corner. More rounded is opted into, so there it climbs.
- */
-export function coverRadius(corners: CoverCorners, size: number): number {
-  if (corners === 'square') return 0;
-  if (size <= 56) return corners === 'round' ? radius.md : radius.sm;
-  if (corners === 'rounded') return radius.md;
-  return size >= 240 ? radius.xl : radius.lg;
-}
-
+/** The corner of a cover of this size (Settings › Appearance › Cover corners). */
 export function useCoverRadius(size: number): number {
-  return coverRadius(useSettings((s) => s.coverCorners), size);
+  return coverRadiusAt(useSettings((s) => s.coverCorners), size);
 }
 
 interface Props {
