@@ -409,8 +409,13 @@ export default function PlayerScreen() {
   // local index by album (offline). Base64 is no longer stored per song.
   // A radio has no album, but the station may carry its own image (the server
   // holds it, so it's the same one every client shows).
+  const playerFullBleed = useSettings((s) => s.playerFullBleed);
+  const motionMode = useSettings((s) => s.animatedArtworkMode);
+  // Off, the player costs what it always did: the size `warmArtwork` already
+  // loaded, and no edge sampling.
+  const mayBleed = playerFullBleed || motionMode === 'fullBleed';
   const coverOf = (s?: Song | null) =>
-    s ? songCoverUrl(s, COVER.full) : undefined;
+    s ? songCoverUrl(s, mayBleed ? COVER.full : COVER.card) : undefined;
   const cover = coverOf(song);
   // Spotify-style background: gradient from the cover's dominant color
   // (toggle in Settings → Theme). The color transitions smoothly on song
@@ -419,11 +424,9 @@ export default function PlayerScreen() {
   const { width: screenW, height: screenH, landscape } = useScreenSize();
   const background = useSettings((s) => s.playerBackground);
   const colorBackground = background === 'color';
-  const playerFullBleed = useSettings((s) => s.playerFullBleed);
   const [headerHeight, setHeaderHeight] = useState(64);
-  const bottomEdge = useArtworkEdgeColor(cover);
-  const topEdge = useArtworkEdgeColor(cover, 'top', true);
-  const motionMode = useSettings((s) => s.animatedArtworkMode);
+  const bottomEdge = useArtworkEdgeColor(mayBleed ? cover : undefined);
+  const topEdge = useArtworkEdgeColor(mayBleed ? cover : undefined, 'top', true);
   const motionAllowed = useArtworkMotionAllowed();
   // An animated cover (GIF, animated WebP, APNG) can take the whole screen
   // instead of playing inside the square, with a still copy of itself next to
