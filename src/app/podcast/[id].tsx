@@ -54,8 +54,6 @@ export default function PodcastScreen() {
   const lang = useSettings((s) => s.language);
   const hideUnavailable = useSettings((s) => s.hideUnavailableOffline);
   const showDescription = useSettings((s) => s.showPlaylistDescription);
-  const hidePlayed = useSettings((s) => s.podcastHidePlayed);
-  const setHidePlayed = useSettings((s) => s.setPodcastHidePlayed);
   const playQueue = usePlayerStore((s) => s.playQueue);
   const playingId = usePlayerStore((s) => currentSong(s)?.id);
 
@@ -119,9 +117,7 @@ export default function PodcastScreen() {
     if (!data.data) return { songs: [] as Song[], meta: '', episodeInfo: undefined };
     const { channel, episodes: list } = data.data;
     const marked = markUnplayableOffline(list.map((e) => episodeToSong(e, channel)));
-    const shown = marked.filter(
-      (s) => !(hideUnavailable && s.unavailable) && !(hidePlayed && playedIds.has(s.id)),
-    );
+    const shown = hideUnavailable ? marked.filter((s) => !s.unavailable) : marked;
     const totalSec = list.reduce((acc, e) => acc + (e.duration ?? 0), 0);
     const line = [
       t('Podcast'),
@@ -149,7 +145,7 @@ export default function PodcastScreen() {
       ]),
     );
     return { songs: shown, meta: line, episodeInfo: info };
-  }, [data.data, hideUnavailable, hidePlayed, playedIds, lang]);
+  }, [data.data, hideUnavailable, playedIds, lang]);
 
   // Stable between progress ticks (only changes with status): if its identity
   // changed on every % update, the Pressable would lose its touch and you'd
@@ -224,11 +220,6 @@ export default function PodcastScreen() {
         }
         // The ⋯ opens the show's own sheet (store-driven, mounted globally).
         onMenu={() => openPodcastMenu(ch)}
-        addAction={{
-          label: hidePlayed ? t('Show played') : t('Hide played'),
-          icon: hidePlayed ? 'eye-outline' : 'eye-off-outline',
-          onPress: () => setHidePlayed(!hidePlayed),
-        }}
         emptyState={
           <EmptyState icon="headset-outline" title={t('No episodes')} />
         }

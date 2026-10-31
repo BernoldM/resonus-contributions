@@ -11,7 +11,7 @@ Releases before 0.2.1 are only listed on the
 
 ### Added
 
-- Podcasts: mark episodes as played or unplayed, and hide the played ones.
+- Podcasts: mark episodes as played or unplayed.
 - Podcasts: new episodes of favorite shows can download by themselves over Wi-Fi.
 
 ### Changed
