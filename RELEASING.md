@@ -54,7 +54,9 @@ Release with the APK attached, so you can review it before publishing.
    `.github/workflows/unsignedipa.yaml`, which attaches `resonus-v0.1.0-beta.ipa`
    to that same draft. Open it in the Releases tab, review the notes and
    press **Publish**.
-5. Add the version to `Source.json` (see below).
+5. Publishing it adds the version to `Source.json`, through
+   `.github/workflows/altstore-source.yml`. Check that the commit lands on `main`;
+   to rerun it, start that workflow by hand with the tag.
 
 ## `Source.json`: the iOS source
 
@@ -72,12 +74,9 @@ version is installed from. Two things:
 
 Each entry has `version`, `date` in ISO 8601, `size` in bytes, the
 `downloadURL` of the Release's `.ipa` and `localizedDescription` with that
-version's changelog in plain text. The exact size can be read without
-downloading anything:
-
-```sh
-gh release view v0.1.0-beta --json assets --jq '.assets[] | "\(.name) \(.size)"'
-```
+version's changelog in plain text. The workflow fills them all in from the
+Release and `CHANGELOG.md`, so a version needs its section there before it is
+published.
 
 ## Notes
 

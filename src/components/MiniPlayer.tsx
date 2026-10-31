@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { COVER, songCoverUrl, type Song } from '@/api/data';
+import { COVER, canGoIntoPlaylist, songCoverUrl, type Song } from '@/api/data';
 import { episodeHeart, heartedSong } from '@/api/podcasts';
 import { usePodcastFavoriteIds } from '@/lib/podcastFavorites';
 import { useDominantColor } from '@/hooks/useDominantColor';
@@ -27,10 +27,11 @@ import { router } from 'expo-router';
 import { revealOffset } from '@/lib/playerReveal';
 import { pushOnce } from '@/lib/pushOnce';
 import { currentSong, useLiveInfo, usePlayerStore } from '@/store/player';
+import { usePlaylistPicker } from '@/store/playlistPicker';
 import { CONTENT_MAX_WIDTH, useScreenSize } from '@/hooks/useScreenSize';
 import { useSettings } from '@/store/settings';
 import { useToast } from '@/store/toast';
-import { colors, fontSize, radius, restyled, spacing, themed } from '@/theme';
+import { colors, fontSize, PILL_RADIUS, radius, restyled, spacing, themed } from '@/theme';
 import { motion } from '@/theme/motion';
 import { BarBlur, useBarBlur } from './BarBlur';
 import { Cover } from './Cover';
@@ -207,6 +208,16 @@ export function MiniPlayer({ active = true }: { active?: boolean }) {
   const favorited = heartedSong(song, podcastFav, favIds);
   // The heart writes the device's own SQLite favorite for an episode.
   const podcastHeart = episodeHeart(song);
+  /**
+   * What holding the heart does: the app's playlist sheet, with this song
+   *  (#286). The sheet is the one mounted in the root layout above this bar,
+   *  so opening it is a store write and no navigation. A station's and an
+   *  episode's id names no track a playlist can take (`canGoIntoPlaylist`),
+   *  so those are handed nothing and their heart stays a tap, as it was.
+   */
+  const openPlaylistSheet = canGoIntoPlaylist(song)
+    ? () => usePlaylistPicker.getState().open([song])
+    : undefined;
 
   return (
     <GestureDetector gesture={pan}>
@@ -216,9 +227,9 @@ export function MiniPlayer({ active = true }: { active?: boolean }) {
             and nothing about a bar with three things in it needs 1280 points
             (#131). */}
         {/* The shadow sits outside the card, which clips its own contents. */}
-        <View style={[styles.card, wide && styles.narrow, pills && { borderRadius: 32, boxShadow: undefined }]}>
+        <View style={[styles.card, wide && styles.narrow, pills && { borderRadius: PILL_RADIUS, boxShadow: undefined }]}>
         <Pressable
-          style={[styles.container, { backgroundColor: blur ? 'transparent' : bg }, pills && { borderRadius: 32 }]}
+          style={[styles.container, { backgroundColor: blur ? 'transparent' : bg }, pills && { borderRadius: PILL_RADIUS }]}
           onPress={() => pushOnce('/player')}
         >
           {blur ? <BarBlur tint={bg} alpha={0.55} /> : null}
@@ -238,7 +249,13 @@ export function MiniPlayer({ active = true }: { active?: boolean }) {
         </View>
       </Animated.View>
       {buttons === 'favorite' ? (
-        <FavoriteButton id={song.id} starred={favorited} podcast={podcastHeart} size={24} />
+        <FavoriteButton
+          id={song.id}
+          starred={favorited}
+          podcast={podcastHeart}
+          size={24}
+          hold={openPlaylistSheet}
+        />
       ) : null}
       {buttons === 'previousNext' ? (
         <Pressable
@@ -326,7 +343,7 @@ const styles = themed((colors) => ({
   },
   pillOutline: {
     ...StyleSheet.absoluteFill,
-    borderRadius: 32,
+    borderRadius: PILL_RADIUS,
     borderWidth: 0.5,
     borderColor: colors.highlight,
   },

@@ -16,15 +16,16 @@ const state = {
   offline: false, saved: undefined as Record<string, unknown> | undefined,
   response: leona as unknown, status: 200, failFetch: false, failValidation: false, animated: false,
   masks: new Map<string, boolean>(), files: new Map<string, string>(), loaded: [] as string[],
-  refs: [] as { uri: string; options: { tintColor: string }; released: boolean }[], written: undefined as Record<string, unknown> | undefined, fetches: 0,
+  refs: [] as { uri: string; options: { tintColor: string }; released: boolean }[], written: undefined as Record<string, unknown> | undefined, fetches: 0, network: new Map<string, unknown>(),
 };
 Object.assign(globalThis, { __signatureCacheTest: state });
 const stub = (code: string) => `data:text/javascript,${encodeURIComponent(code)}`;
 const hooks = registerHooks({ resolve(specifier, context, next) {
   const prelude = 'const s = globalThis.__signatureCacheTest;';
   if (specifier === 'expo/fetch') return { shortCircuit: true, url: stub(prelude + `
-    export async function fetch() {
-      s.fetches++; if(s.failFetch) throw Error('offline');
+    export async function fetch(url) {
+      s.fetches++; if(s.network.has(url)) return {ok:true,status:200,text:async()=>JSON.stringify(s.network.get(url))};
+      if(s.failFetch) throw Error('offline');
       return {ok:s.status===200,status:s.status,text:async()=>JSON.stringify(s.response)};
     }`) };
   if (specifier === 'expo-file-system/legacy') return { shortCircuit: true, url: stub(prelude + `
@@ -56,7 +57,7 @@ const lookup = () => getArtistSignature('Leona Lewis', api);
 beforeEach(() => {
   Object.assign(state, { offline: false, saved: undefined, response: leona, status: 200,
     failFetch: false, failValidation: false, animated: false, masks: new Map(), files: new Map(),
-    loaded: [], refs: [], written: undefined, fetches: 0 });
+    loaded: [], refs: [], written: undefined, fetches: 0, network: new Map() });
 });
 
 describe('signature pixel validation and cache', () => {
@@ -90,12 +91,12 @@ describe('signature pixel validation and cache', () => {
     assert.equal(await getArtistSignature('Leona Lewis'), null);
     assert.equal(state.fetches, 0);
   });
-  it('revalidates v3 Leona metadata and stores a short-lived v5 miss', async () => {
+  it('revalidates v3 Leona metadata and stores a short-lived v7 miss', async () => {
     state.saved = { version: 3, key, at: Date.now(), response: leona };
     assert.equal(await lookup(), null);
     assert.equal(state.fetches, 1);
     assert.deepEqual(state.loaded, []);
-    assert.equal(state.written?.version, 5);
+    assert.equal(state.written?.version, 7);
     assert.equal(state.written?.found, false);
   });
   it('rejects opaque pixels and returns the exact checked next image', async () => {
@@ -158,7 +159,7 @@ describe('signature pixel validation and cache', () => {
     state.response = response(png); state.masks.set(png, true);
     assert.equal((await lookup())?.imageUrl, png);
     assert.equal(state.fetches, 1);
-    assert.equal(state.written?.version, 5);
+    assert.equal(state.written?.version, 7);
     assert.equal(state.written?.found, true);
   });
   it('rejects cache key collisions', async () => {
@@ -167,7 +168,7 @@ describe('signature pixel validation and cache', () => {
     assert.deepEqual(state.loaded, []);
   });
   it('keeps a fresh negative hit for five minutes', async () => {
-    state.saved = { version: 5, key, at: Date.now(), found: false, response: { signatures: [] } };
+    state.saved = { version: 7, key, at: Date.now(), found: false, response: { signatures: [] } };
     assert.equal(await lookup(), null);
     assert.equal(state.fetches, 0);
   });
@@ -175,5 +176,24 @@ describe('signature pixel validation and cache', () => {
     state.status = 404;
     assert.equal(await lookup(), null);
     assert.equal(state.written?.found, false);
+  });
+});
+
+describe('Michael Jackson identity and licence lookup', () => {
+  it('loads the exact Commons file after reciprocal identity and licence checks', async () => {
+    const mbid = 'f27ec8db-af05-4f36-916e-3d57f91ecf5e';
+    const file = 'Michael Jackson signature.svg';
+    const michael = JSON.parse(readFileSync(new URL('./fixtures/signatures/michael-jackson-provider.json', import.meta.url), 'utf8'));
+    const image = michael.signatures[0].asset.url;
+    state.response = michael; state.masks.set(image, true);
+    const claim = (value: string) => ({ mainsnak: { datavalue: { value } } });
+    state.network.set(`https://musicbrainz.org/ws/2/artist/${mbid}?inc=url-rels&fmt=json`, { id: mbid, relations: [{ type: 'wikidata', url: { resource: 'https://www.wikidata.org/wiki/Q2831' } }] });
+    state.network.set('https://www.wikidata.org/wiki/Special:EntityData/Q2831.json', { entities: { Q2831: { id: 'Q2831', claims: { P434: [claim(mbid)], P109: [claim(file)] } } } });
+    const url = new URL('https://commons.wikimedia.org/w/api.php');
+    url.search = new URLSearchParams({ action: 'query', prop: 'templates', titles: `File:${file}`, tllimit: 'max', format: 'json' }).toString();
+    state.network.set(url.href, { query: { pages: { 1: { title: `File:${file}`, templates: [{ title: 'Template:PD-signature' }] } } } });
+    assert.equal((await getArtistSignature('Michael Jackson', api, '#ffffff', mbid))?.imageUrl, image);
+    assert.equal(state.fetches, 4);
+    assert.equal(state.written?.found, true);
   });
 });

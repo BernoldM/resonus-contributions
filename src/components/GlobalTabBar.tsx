@@ -35,7 +35,7 @@ import { motion } from '@/theme/motion';
 import { useT } from '@/i18n';
 import { rememberTab, reselectTab, tabOrigin, TABS } from '@/lib/tabOrigin';
 import { useSettings } from '@/store/settings';
-import { colors, MINI_PLAYER_GAP, MINI_PLAYER_HEIGHT, themed, useThemeMode } from '@/theme';
+import { colors, MINI_PLAYER_GAP, MINI_PLAYER_HEIGHT, PILL_MARGIN, PILL_RADIUS, themed, useThemeMode } from '@/theme';
 
 const ICONS: Record<string, 'home' | 'search' | 'library' | 'albums' | 'settings'> = {
   index: 'home',
@@ -163,7 +163,7 @@ export function GlobalTabBar() {
         compact && styles.barCompact,
         navStyle === 'gradient' ? null : blur ? null : styles.solid,
         fadeStyle,
-        pills && { left: insets.left + 8, right: insets.right + 8, bottom: Math.max(insets.bottom, 8), height: barHeight, paddingBottom: 0, borderRadius: 32, overflow: 'hidden' },
+        pills && { left: insets.left + PILL_MARGIN, right: insets.right + PILL_MARGIN, bottom: Math.max(insets.bottom, PILL_MARGIN), height: barHeight, paddingBottom: 0, borderRadius: PILL_RADIUS, overflow: 'hidden' },
       ]}
     >
       {blur && blurOn ? <BarBlur /> : null}
@@ -245,7 +245,7 @@ const styles = themed((colors) => ({
   solid: { backgroundColor: colors.background },
   pillOutline: {
     ...StyleSheet.absoluteFill,
-    borderRadius: 32,
+    borderRadius: PILL_RADIUS,
     borderWidth: 0.5,
     borderColor: colors.highlight,
   },

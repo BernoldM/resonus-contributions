@@ -9,10 +9,19 @@ Releases before 0.2.1 are only listed on the
 
 ## [Unreleased]
 
+### Fixed
+
+- The progress bar looks the same on every Android phone.
+- Next and previous from other apps and devices, like Garmin watches, should now work (#307).
+
+## [0.8.5] - 2026-10-30
+
 ### Added
 
 - Playback speed: a slider and −/+ buttons in steps of 0.01, a Preserve pitch switch that, turned off, lets the pitch follow the speed like a record, and the resulting BPM when the song has one (#277).
 - Podcasts: download episodes to play offline, favorite them, queue them, and find them in Library, search and Home. Thanks to Garrit Schröder.
+- Optional pill shapes for the navigation bar and the Mini Player.
+- Holding the heart in the player or the Mini Player opens the sheet to add the song to a playlist (#286). Thanks to @Lennardsmw.
 
 ### Changed
 
@@ -36,6 +45,13 @@ Releases before 0.2.1 are only listed on the
 - A cover on screen no longer turns into the placeholder when the app goes offline.
 - "Download over Wi-Fi only" now stops a download that is running when the Wi-Fi drops, instead of carrying on over mobile data.
 - Cover art no longer passes your server login to other apps that read what is playing (lock screen widgets, watches, the car). On Android Automotive the covers in the browse lists show up again.
+- A tapped song no longer waits behind preloading and cover downloads on servers that fetch each track first (#269).
+- Dates on the History screen now follow the app language.
+- Pulling to refresh on the Library's All tab now also updates podcasts.
+- Android Auto now updates a list that is already open when the library finishes loading.
+- Albums in Android Auto no longer open empty when they are beyond the first 40 loaded.
+- Android Auto no longer crashes on a queue with the same song twice, and shows what is playing when it connects after playback started.
+- On iOS, tapping the song on the lock screen now opens the app.
 - The screen shown when something crashes is now in your language instead of always in Spanish.
 
 ## [0.8.4] - 2026-10-20
