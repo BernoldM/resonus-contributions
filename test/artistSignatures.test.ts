@@ -100,3 +100,17 @@ describe('signature image eligibility', () => {
     ] })?.imageUrl, imageUrl);
   });
 });
+
+describe('independent Commons identity and rights', () => {
+  const michael = JSON.parse(readFileSync(new URL('./fixtures/signatures/michael-jackson-provider.json', import.meta.url), 'utf8'));
+  const filename = 'Michael Jackson signature.svg';
+  it('requires both identity and independently confirmed Commons rights', () => {
+    assert.deepEqual(artistSignatureCandidates(michael), []);
+    assert.deepEqual(artistSignatureCandidates(michael, '', [filename]), []);
+    assert.deepEqual(artistSignatureCandidates(michael, '', [], [filename]), []);
+    const candidates = artistSignatureCandidates(michael, '', [filename], [filename]);
+    assert.equal(candidates.length, 1);
+    assert.ok(candidates[0].imageUrl.includes('Michael_Jackson_signature.svg'));
+    assert.ok(candidates[0].attribution.includes('PD-signature'));
+  });
+});

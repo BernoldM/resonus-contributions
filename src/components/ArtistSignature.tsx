@@ -10,13 +10,13 @@ import { useSettings } from '@/store/settings';
 import { publicHttpsUrl } from '@/lib/artworkSources';
 
 /** The real name remains accessible and visible until an autograph has drawn. */
-export function ArtistSignature({ name, width }: { name: string; width: number }) {
+export function ArtistSignature({ name, width, musicBrainzId }: { name: string; width: number; musicBrainzId?: string }) {
   const t = useT();
   const enabled = useSettings((s) => s.artistSignaturesEnabled);
   const api = useSettings((s) => s.artistSignaturesApi);
   const { data } = useQuery({
-    queryKey: ['artist-signature-v6', api, name, colors.text],
-    queryFn: () => getArtistSignature(name, api, colors.text),
+    queryKey: ['artist-signature-v9', api, name, musicBrainzId, colors.text],
+    queryFn: () => getArtistSignature(name, api, colors.text, musicBrainzId),
     enabled: enabled && !!publicHttpsUrl(api),
     staleTime: 5 * 60 * 1000,
     retry: 1,
