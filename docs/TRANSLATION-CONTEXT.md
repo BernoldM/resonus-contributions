@@ -1031,7 +1031,7 @@ you are actually typing into, which is easier than reading it here.
 | `Elements` | Which player elements to show |
 | `Favorite` | One of the choices for the button next to play on the mini player: the heart. Not a verb |
 | `Fit cover art` | Show the whole cover even if it is not square, instead of cropping it to fill |
-| `Full-bleed album artwork` |  |
+| `Full-bleed album artwork` | Album detail layout: cover spans the screen width and fades into the background; not an audio effect. |
 | `Go to album` | Leave this sheet and open the album the song is on |
 | `In the cover` | A value of `Animated artwork`: the animated cover plays inside the square where the cover is |
 | `Keep paused when skipping` |  |
