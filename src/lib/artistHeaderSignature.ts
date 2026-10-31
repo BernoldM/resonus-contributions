@@ -7,6 +7,7 @@ import { loadSignatureImage, type LoadedArtistSignature } from './signatureImage
  */
 export async function getArtistHeaderSignature(name: string, options: {
   api?: string;
+  musicBrainzId?: string;
   appleLogos: boolean;
   offline: boolean;
   tintColor: string;
@@ -18,5 +19,5 @@ export async function getArtistHeaderSignature(name: string, options: {
       if (image) return image;
     } catch { /* Optional logo errors still allow the configured provider/name. */ }
   }
-  return options.api ? getArtistSignature(name, options.api, options.tintColor) : null;
+  return options.api ? getArtistSignature(name, options.api, options.tintColor, options.musicBrainzId) : null;
 }

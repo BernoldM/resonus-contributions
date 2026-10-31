@@ -11,16 +11,16 @@ import { useSettings } from '@/store/settings';
 import { publicHttpsUrl } from '@/lib/artworkSources';
 
 /** The real name remains accessible and visible until an autograph has drawn. */
-export function ArtistSignature({ name, width }: { name: string; width: number }) {
+export function ArtistSignature({ name, width, musicBrainzId }: { name: string; width: number; musicBrainzId?: string }) {
   const t = useT();
   const enabled = useSettings((s) => s.artistSignaturesEnabled);
   const appleLogos = useSettings((s) => s.appleArtistLogos);
   const offline = useAuthStore((s) => s.offline);
   const api = useSettings((s) => s.artistSignaturesApi);
   const { data: signature } = useQuery({
-    queryKey: ['artist-header-signature-v6', enabled, api, appleLogos, name, offline, colors.text],
+    queryKey: ['artist-header-signature-v9', enabled, api, appleLogos, name, musicBrainzId, offline, colors.text],
     queryFn: () => getArtistHeaderSignature(name, {
-      api: enabled ? api : undefined, appleLogos, offline, tintColor: colors.text,
+      api: enabled ? api : undefined, appleLogos, offline, tintColor: colors.text, musicBrainzId,
     }),
     enabled: appleLogos || (enabled && !!publicHttpsUrl(api)),
     staleTime: 5 * 60 * 1000,

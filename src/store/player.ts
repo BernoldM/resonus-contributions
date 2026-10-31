@@ -63,6 +63,7 @@ import {
 } from '@/lib/animatedArtwork';
 import { tg } from '@/i18n';
 import { transcodeTarget } from '@/lib/audioQuality';
+import { holdSpeculation, releaseSpeculation, speculationOpen } from '@/lib/speculation';
 import { favoriteLabel, favoriteState, onFavoritesChange, toggleFavorite } from '@/lib/remoteFavorite';
 import type { Remap } from '@/lib/navidromeRemap';
 import { remapSong } from '@/lib/navidromeRemap';
@@ -1042,6 +1043,9 @@ let loadToken = 0;
  * says true: showing one song while another sounds is the one thing this must
  * never do.
  */
+/** The load that holds the speculation gate has not reported a playable source. */
+let awaitingSource = false;
+
 async function loadIndex(index: number, autoplay: boolean): Promise<boolean> {
   const token = ++loadToken;
   // Anything asked to play is the app in use, whoever asked: the button, the
@@ -1122,6 +1126,11 @@ async function loadIndex(index: number, autoplay: boolean): Promise<boolean> {
     useToast.getState().show(tg("Couldn't play the song"));
     return false;
   }
+  // A song somebody asked for goes first; `onStatus` opens the gate once it has
+  // started. Not one of these waits for a server: a file, a station, a restore.
+  awaitingSource = autoplay && !song.url && !localSourceFor(song);
+  if (awaitingSource) holdSpeculation();
+  else releaseSpeculation();
   // The player is holding this song now and whatever it held before is gone,
   // so the screen follows it here and not one line later: everything below can
   // fail, and none of it can put the old song back.
@@ -1527,9 +1536,16 @@ const PRELOAD_AHEAD = 5;
  *  (~1 request per advance), not all five each time. Cleared on queue change
  *  (playQueue). */
 const warmedIds = new Set<string>();
+/** Raised when a queue replaces another: what the last one still had to warm is
+ *  nobody's now, and each would hold the proxy for up to two minutes. */
+let warmWalk = 0;
+/** The warm on its way, hung up on when its queue goes away. */
+let warmInFlight: AbortController | null = null;
 
 function resetWarmed() {
   warmedIds.clear();
+  warmWalk++;
+  warmInFlight?.abort();
 }
 
 function warmUpcoming() {
@@ -1588,15 +1604,21 @@ const WARM_TIMEOUT_MS = 120_000;
 let warmChain: Promise<void> = Promise.resolve();
 
 function warmStream(id: string, url: string) {
-  warmChain = warmChain.then(() => warmRequest(id, url));
+  const walk = warmWalk;
+  warmChain = warmChain.then(() => warmRequest(id, url, walk));
 }
 
-async function warmRequest(id: string, url: string) {
+async function warmRequest(id: string, url: string, walk: number) {
+  await speculationOpen();
+  if (walk !== warmWalk) return;
+  // Reached by a skip while it waited: the player is already asking for it.
+  if (currentSong(usePlayerStore.getState())?.id === id) return;
   // Nothing is warmed offline: there is no stream to fetch, and the request
   // would be one more thing reaching the network behind someone's back.
   if (useAuthStore.getState().offline) return;
   bump('preload · asked the server');
   const ctrl = new AbortController();
+  warmInFlight = ctrl;
   const timer = setTimeout(() => ctrl.abort(), WARM_TIMEOUT_MS);
   try {
     // `expoFetch`, not the global one: this runs while a song is playing, which
@@ -1617,6 +1639,7 @@ async function warmRequest(id: string, url: string) {
     warmedIds.delete(id);
   } finally {
     clearTimeout(timer);
+    warmInFlight = null;
   }
 }
 
@@ -2847,6 +2870,8 @@ function onPlaybackError(message: string, wasPlaying: boolean): void {
   );
   if (errorAttempts >= MAX_ERROR_ATTEMPTS) {
     bump('player · gave up on the track');
+    awaitingSource = false;
+    releaseSpeculation();
     // Where it stopped is written down now, not at the next tick: the queue
     // position is only saved every so often, so coming back without this
     // would resume minutes before the stop instead of at it.
@@ -3059,6 +3084,10 @@ function onStatus(status: AudioStatus, live = false) {
   if (status.error) {
     onPlaybackError(status.error, intendPlay);
     return;
+  }
+  if (awaitingSource && status.isLoaded && !status.isBuffering) {
+    awaitingSource = false;
+    releaseSpeculation();
   }
   // Sound: whatever it took, this track is not the failing one any more.
   if (status.playing) playerFailed = false;
@@ -4235,6 +4264,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       radioSeed: get().radioSeed,
     };
     queueOrigin = null;
+    // The list goes up before it is loaded, and the store subscription warms
+    // what follows it at that same moment.
+    const tapped = queued[at];
+    const hold = tapped && !tapped.url && !localSourceFor(tapped) && !remoteKind() ? holdSpeculation() : undefined;
     set({
       queue: queued,
       index: at,
@@ -4255,7 +4288,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     // an empty queue says less than the one that failed, and the toast has
     // already said what happened.
     const ok = await loadIndex(at, true);
-    if (!ok && before.queue.length > 0) set(before);
+    if (!ok) {
+      if (hold !== undefined) releaseSpeculation(hold);
+      if (before.queue.length > 0) set(before);
+    }
     return ok;
   },
 

@@ -573,7 +573,7 @@ export default function ArtistScreen() {
             style={StyleSheet.absoluteFill}
           />
           <Animated.View style={{ opacity: nameOpacity }}>
-            <ArtistSignature name={data.artist.name} width={screenW} />
+            <ArtistSignature name={data.artist.name} width={screenW} musicBrainzId={data.artist.musicBrainzId ?? info?.musicBrainzId} />
           </Animated.View>
         </View>
 

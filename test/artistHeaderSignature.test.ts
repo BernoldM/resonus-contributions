@@ -4,7 +4,7 @@ import { beforeEach, it } from 'node:test';
 
 const logo = { imageUrl: 'https://is1-ssl.mzstatic.com/logo.png', aspect: 3, attribution: 'Apple Music' };
 const state = { logo: logo as typeof logo | null, usable: true, failApple: false,
-  calls: [] as string[], loadOptions: [] as unknown[] };
+  calls: [] as string[], loadOptions: [] as unknown[], providerOptions: [] as unknown[] };
 Object.assign(globalThis, { __artistHeaderTest: state });
 const stub = (body: string) => `data:text/javascript,${encodeURIComponent('const s=globalThis.__artistHeaderTest;' + body)}`;
 const hooks = registerHooks({ resolve(specifier, context, next) {
@@ -12,14 +12,14 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   const body: Record<string, string> = {
     './appleArtistArtCache': `export async function getAppleArtistLogo(){s.calls.push('apple');if(s.failApple)throw Error('unavailable');return s.logo}`,
     './signatureImage': `export async function loadSignatureImage(logo,offline,tint){s.calls.push('pixels');s.loadOptions.push([offline,tint]);return s.usable?{...logo,image:{}}:null}`,
-    './signatureCache': `export async function getArtistSignature(name,api,tint){s.calls.push('provider');return {imageUrl:api,image:{},aspect:2,attribution:name}}`,
+    './signatureCache': `export async function getArtistSignature(name,api,tint,mbid){s.calls.push('provider');s.providerOptions.push([name,api,tint,mbid]);return {imageUrl:api,image:{},aspect:2,attribution:name}}`,
   };
   return body[specifier] ? { shortCircuit: true, url: stub(body[specifier]) } : next(specifier, context);
 } });
 const { getArtistHeaderSignature } = await import('@/lib/artistHeaderSignature');
 hooks.deregister();
 const options = { appleLogos: true, api: 'https://signatures.example', offline: false, tintColor: '#ffffff' };
-beforeEach(() => Object.assign(state, { logo, usable: true, failApple: false, calls: [], loadOptions: [] }));
+beforeEach(() => Object.assign(state, { logo, usable: true, failApple: false, calls: [], loadOptions: [], providerOptions: [] }));
 
 it('prefers a checked Apple logo before fetching any provider signature', async () => {
   assert.equal((await getArtistHeaderSignature('Queen', options))?.imageUrl, logo.imageUrl);
@@ -45,4 +45,11 @@ it('allows Apple without enabling a provider and propagates offline/tint to vali
 it('keeps the name without contacting either source when both are disabled', async () => {
   assert.equal(await getArtistHeaderSignature('Queen', { ...options, api: undefined, appleLogos: false }), null);
   assert.deepEqual(state.calls, []);
+});
+
+it('preserves the MusicBrainz identity when falling back from Apple to the signature provider', async () => {
+  state.logo = null;
+  const mbid = 'f27ec8db-af05-4f36-916e-3d57f91ecf5e';
+  await getArtistHeaderSignature('Michael Jackson', { ...options, musicBrainzId: mbid });
+  assert.deepEqual(state.providerOptions, [['Michael Jackson', options.api, options.tintColor, mbid]]);
 });
