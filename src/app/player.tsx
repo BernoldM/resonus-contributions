@@ -30,7 +30,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { CACHED_COVER, COVER, songCoverUrl, star, unstar, type Song } from '@/api/data';
+import { CACHED_COVER, COVER, canGoIntoPlaylist, songCoverUrl, star, unstar, type Song } from '@/api/data';
 import { episodeHeart, heartedSong, togglePodcastHeart } from '@/api/podcasts';
 import { ArtistPlayerCard } from '@/components/ArtistPlayerCard';
 import { AudioQualityBadge } from '@/components/AudioQualityBadge';
@@ -80,6 +80,7 @@ import {
   useLiveInfo,
   usePlayerStore,
 } from '@/store/player';
+import { usePlaylistPicker } from '@/store/playlistPicker';
 import { useSettings, type CoverTapAction } from '@/store/settings';
 import { useSongMenu } from '@/store/songMenu';
 import { useToast } from '@/store/toast';
@@ -960,6 +961,19 @@ export default function PlayerScreen() {
   // The heart writes the device's own SQLite favorite for an episode, so the
   // button is told which show it belongs to.
   const podcastHeart = episodeHeart(song);
+  /**
+   * What holding the heart does: opens the app's playlist sheet with this song
+   *  (#286). Nothing about the favourite happens in a hold, and the sheet is
+   *  the one mounted in the root layout, so opening it is a store write and not
+   *  a navigation: the player stays where it is with the sheet over it.
+   *
+   *  A station and a podcast episode are handed nothing: their id names no
+   *  track a playlist can name (`canGoIntoPlaylist`), so their heart stays a
+   *  tap and a hold does nothing, as it always did.
+   */
+  const openPlaylistSheet = canGoIntoPlaylist(song)
+    ? () => usePlaylistPicker.getState().open([song])
+    : undefined;
   // What the header announces, most specific first (#65). A song added by hand
   // is the queue's own, so the queue is what it says, and only for as long as
   // that song plays. A mix that autoplay grew takes over next, since by then
@@ -1332,6 +1346,7 @@ export default function PlayerScreen() {
                 starred={favorited}
                 podcast={podcastHeart}
                 size={24}
+                hold={openPlaylistSheet}
               />
             </View>
           ) : (
@@ -1555,6 +1570,7 @@ export default function PlayerScreen() {
                 starred={favorited}
                 podcast={podcastHeart}
                 size={26}
+                hold={openPlaylistSheet}
               />
             )}
           </View>
