@@ -31,6 +31,15 @@ The sideloading methods we suggest are:
 
 You can also [add Resonus repository as an altsource](https://altdirect.app/?url=https://raw.githubusercontent.com/juananzzz/resonus/main/Source.json).
 
+## Is Resonus on F-Droid?
+
+Not yet. Once it is, keep in mind that F-Droid builds the app itself and signs
+it with its own key, so the APK from GitHub (or Obtainium) and the one from
+F-Droid cannot update each other. Moving from one to the other means
+uninstalling first; Settings › About › Export settings keeps your settings to
+import afterwards. The F-Droid build is updated by F-Droid, a few days after
+each release here, so it has no update check of its own.
+
 ## How do I get lyrics that light up word by word?
 
 The lyrics have to be timed word by word, and a normal `.lrc` isn't: it only
