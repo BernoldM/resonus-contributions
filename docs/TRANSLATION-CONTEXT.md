@@ -5,7 +5,7 @@
      `src/i18n/context.jsonc`, and where a string shows up is read off the
      code, so both are fixed at the source and this page follows. -->
 
-Every string the app can show, under the screen it shows up on. 826 of them.
+Every string the app can show, under the screen it shows up on. 820 of them.
 The second column is only filled in where the English is ambiguous on its own
 If one tripped you up and the column is empty, that is worth telling us, and
 the answer goes into `src/i18n/context.jsonc` where the next translator of the
@@ -505,6 +505,7 @@ you are actually typing into, which is easier than reading it here.
 | `{n} removed from playlist` | `{n}` is a plain number, with no word for songs attached: English reads "3 removed from playlist". Put in whatever your language needs around it |
 | `Add an optional description` | Placeholder in the empty description box |
 | `Add songs from the ⋯ menu of any song.` | The line under an empty playlist, saying how to fill it |
+| `Added to “{name}”` | Toast. `{name}` is the playlist's name |
 | `Artwork upload is disabled on the server` | The server can do it but has it turned off |
 | `Auto-download` | Keep this playlist downloaded by itself as songs are added to it |
 | `Auto-download off` | The toast that says it was turned off |
@@ -1176,13 +1177,12 @@ you are actually typing into, which is easier than reading it here.
 | String | What it is |
 | --- | --- |
 | `“{name}” will no longer be available offline.` | The line under that title. `{name}` is the album, artist or playlist |
-| `{n} added to “{name}”` | Toast when several songs went in at once. `{n}` is a count of songs |
 | `{n} columns` | The other options in that menu: cards, this many across. `{n}` is 2, 3 or 4, so it is always plural |
 | `{n} episodes couldn't be downloaded` | Toast after a show's download: how many the publisher would not give |
 | `{n} episodes deleted` | Toast after clearing a show's downloads: how many files went |
 | `{n} episodes downloaded` | Toast after a show's download: how many episodes landed on the phone |
 | `{n} of {m} songs exported` | Toast when only some of them made it |
-| `{n} of {songs} are already in “{name}”.` | The same warning when adding several at once and only some of them are already there. `{n}` is how many of them are, and `{songs}` already reads as a count ("12 songs"), so the sentence is like "3 of 12 songs are already in “Rock”." |
+| `{n} of {songs}` | Beside a playlist in the add to playlist sheet, when it holds only some of the songs being added. `{songs}` already reads as a count, so it is like "3 of 12 songs" |
 | `{n} removed from favorites` | Toast. `{n}` is a count of songs |
 | `{n} selected` | How many songs are ticked right now |
 | `{n} songs couldn't be downloaded` | Toast: some failed, the rest are there |
@@ -1193,19 +1193,14 @@ you are actually typing into, which is easier than reading it here.
 | `{songs} need about {size}, but only {free} is free. The download may stop partway.` | The same line when the phone is nearly full |
 | `{songs} will be saved to this device (about {size}).` | The same line when the size is known. `{size}` is like "340 MB" |
 | `{songs} will be saved to this device.` | The line under that title. `{songs}` is already worded and inflected, "12 songs" |
-| `Add anyway` | The confirm button of that warning: put it in a second time |
-| `Add only the new ones` | The other button of that warning, when some are already in the playlist and some are not: leave the ones that are and add the rest |
 | `Add to a playlist` | Menu action: put this song, album or selection into a playlist |
 | `Add to favorites` | Menu action and screen reader label for the heart. A verb |
 | `Add to queue` | Action: put this song at the end of the queue |
-| `Added to “{name}”` | Toast. `{name}` is the playlist's name |
 | `Added to favorites` | Toast |
 | `Added to queue` | The toast that says it worked |
 | `Album` | In search results, the little word under a result saying what kind of thing it is |
 | `Albums` | A heading over a list of them, never a count |
-| `All {songs} are already in “{name}”.` | The same warning when every one of the several being added is already there. `{songs}` already reads as a count ("12 songs") |
 | `Alphabetical` | Sort option: the order of a list |
-| `Already added` | Title of the dialog that warns the song is in that playlist already |
 | `Ascending` | Sort option: the order of a list |
 | `Back` | Screen reader label for the back arrow. A direction, not a verb |
 | `Cancel` | The button that closes a dialog without doing anything, and the one beside a search box |
@@ -1289,7 +1284,6 @@ you are actually typing into, which is easier than reading it here.
 | `Stop` | Stop a download that is running. Not stop playback |
 | `Stop download?` | Dialog title: stop a download that is running |
 | `This song can't be cast` | Toast: the speaker or TV will not take this file |
-| `This song is already in “{name}”.` | The line under that title. `{name}` is the playlist |
 | `Undo` | The button in a toast that takes back what just happened. It is there for a few seconds |
 | `Unexpected server response` |  |
 | `Unknown album` | Fallback when the file and the server have no album |
