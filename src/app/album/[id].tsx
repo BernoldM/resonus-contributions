@@ -180,9 +180,10 @@ export default function AlbumScreen() {
   const lastGood = useRef(fresh);
   if (fresh && fresh.songs.length > 0) lastGood.current = fresh;
   const data = vanished ? (lastGood.current ?? fresh) : fresh;
-  const artworkUri = data ? coverArtUrl(data.album.coverArt ?? data.album.id, COVER.full) : undefined;
-  const artworkEdge = useArtworkEdgeColor(artworkUri);
-  const animatedArtwork = useAnimatedArtwork(fresh ? { artist: fresh.album.artist, album: fresh.album.name } : undefined);
+  const artworkUri = data ? coverArtUrl(data.album.coverArt ?? data.album.id, albumFullBleed ? COVER.full : COVER.card) : undefined;
+  // Off, the album costs what it always did: no sampling, no artwork server.
+  const artworkEdge = useArtworkEdgeColor(albumFullBleed ? artworkUri : undefined);
+  const animatedArtwork = useAnimatedArtwork(albumFullBleed && fresh ? { artist: fresh.album.artist, album: fresh.album.name } : undefined);
   const animatedCovers = useSettings((s) => s.animatedCovers);
 
   const discHeaders = useMemo(
